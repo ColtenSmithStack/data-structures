@@ -1,0 +1,15 @@
+/home/coltensmith/workspace/github/data-structures/programs/data-structures-practice/data-structures-practice/bin/Debug/net10.0/data-structures-practice
+/home/coltensmith/workspace/github/data-structures/programs/data-structures-practice/data-structures-practice/bin/Debug/net10.0/data-structures-practice.deps.json
+/home/coltensmith/workspace/github/data-structures/programs/data-structures-practice/data-structures-practice/bin/Debug/net10.0/data-structures-practice.runtimeconfig.json
+/home/coltensmith/workspace/github/data-structures/programs/data-structures-practice/data-structures-practice/bin/Debug/net10.0/data-structures-practice.dll
+/home/coltensmith/workspace/github/data-structures/programs/data-structures-practice/data-structures-practice/bin/Debug/net10.0/data-structures-practice.pdb
+/home/coltensmith/workspace/github/data-structures/programs/data-structures-practice/data-structures-practice/obj/Debug/net10.0/data-structures-practice.GeneratedMSBuildEditorConfig.editorconfig
+/home/coltensmith/workspace/github/data-structures/programs/data-structures-practice/data-structures-practice/obj/Debug/net10.0/data-structures-practice.AssemblyInfoInputs.cache
+/home/coltensmith/workspace/github/data-structures/programs/data-structures-practice/data-structures-practice/obj/Debug/net10.0/data-structures-practice.AssemblyInfo.cs
+/home/coltensmith/workspace/github/data-structures/programs/data-structures-practice/data-structures-practice/obj/Debug/net10.0/data-structures-practice.csproj.CoreCompileInputs.cache
+/home/coltensmith/workspace/github/data-structures/programs/data-structures-practice/data-structures-practice/obj/Debug/net10.0/data-structures-practice.sourcelink.json
+/home/coltensmith/workspace/github/data-structures/programs/data-structures-practice/data-structures-practice/obj/Debug/net10.0/data-structures-practice.dll
+/home/coltensmith/workspace/github/data-structures/programs/data-structures-practice/data-structures-practice/obj/Debug/net10.0/refint/data-structures-practice.dll
+/home/coltensmith/workspace/github/data-structures/programs/data-structures-practice/data-structures-practice/obj/Debug/net10.0/data-structures-practice.pdb
+/home/coltensmith/workspace/github/data-structures/programs/data-structures-practice/data-structures-practice/obj/Debug/net10.0/data-structures-practice.genruntimeconfig.cache
+/home/coltensmith/workspace/github/data-structures/programs/data-structures-practice/data-structures-practice/obj/Debug/net10.0/ref/data-structures-practice.dll

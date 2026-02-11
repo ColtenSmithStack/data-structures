@@ -1,0 +1,70 @@
+# Day 1 
+- Types 
+    - Int 
+        - 4 Bytes, 32 bits 
+    - Double 
+        - 8 bites, 64 bits
+- Data Structures 
+    - Types that hold data 
+    - Fixed Size Arrays 
+        - Properties 
+            - Access by index O(1)
+            - Unsorted search O(n)
+            - Insert at end (if space) O(n)
+            - Insert/Delete at position i O(n) (must shift elements)
+    - Dynamic Arrays
+        - Have code to replace the array with a larger array containing the same data 
+        - Destroy the old array if you want to save space
+    - Stacks
+        - FILO (First in, Last Out)
+    - Queues 
+        - FIFO 
+    - Linked Lists 
+        - Each entry (node) has a pointer to the next entry in the list 
+        - Better for inserting data into the "center" as you can modify the relative pointers rather then shifting every element to the right
+        - First element is the "head"
+        - Ask for further information on use cases like a binary search after inserting an element to the center or adding an element to an empty array
+
+- Algorithms 
+- Account for edge cases 
+- Big O Notation 
+    - Method of tracking how much time an algorithm will take depending on the input size (N)
+    - O of N is okay, anything higher than N log N is really bad 
+    - N is the number of entries to check in a worst possible scenario 
+    - Avoid nested for loops 
+- O Notation Examples 
+    - 1 
+        - Constant 
+        - Single Statement 
+        - Array Index Lookup 
+    - log N 
+        - Logarithmic 
+        - Divide in half 
+        - Binary Search 
+    - N
+        - Linear 
+        - Single Loop 
+        - Find the Maximum 
+    - N log N 
+        - Linearithmic 
+        - Divide and Conquer 
+        - Merge Sort 
+        - Like sorting the set and doing a binary search on the new sorted set
+    - N^2 
+        - Quadratic 
+        - Double Loop 
+        - Check all pairs 
+    - N^3 
+        - Cubic 
+        - Triple Loop 
+        - Check all triples 
+    - 2^N
+        - Exponential 
+        - Exhastive Search 
+        - Check all subsets 
+- Memory 
+    - Memory Costs (in bytes)
+        - Bool - 1
+        - Byte/Char - 1-2
+        - Int - 4
+        - Double - 8 
