@@ -1,0 +1,18 @@
+- Minimum Spanning Tree Problem
+    - A collection of edges connecting all possible vertices in an undirected graph with the minimum possible edge weight
+    - Solutions 
+        - Prim's Algorithm 
+            - From a random starting vertex, choose the lowest weighted edge that connect a vertex in the tree to one outside the tree, branching off to choose the lowest edge weights until every vertice is in the tree
+            - Only works in connected graphs 
+            - Randomly chosen vertex 
+            - O(E * log V) - O(V^2) Time
+        - Kruskal's Algorithm
+            - Sort the edges by weight-asc, then go through add the edges that do not create a cycle until the number of edges is equal to the number of vertices - the number of trees or until you run out of edges
+            - Works in an unconnected graph 
+            - Starts with the lowest edge weight 
+            - O(E * log E) Time
+        - Bellman-Ford Algorithm 
+            - Shortest path with negative weights + negative cycle detection
+            - Relax every single edge and repeat V-1 times
+            - O(VE) Time 
+            - O(V) Space

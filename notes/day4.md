@@ -1,0 +1,91 @@
+- Priority Queues 
+    - Elements have a priority value 
+    - Order: Priority Value 
+    - Insert: O(n) - maintain heap 
+    - Remove: O(log n) - Extract Top 
+    - Peek: O(1) - Highest Priority 
+    - Best For priority based processing 
+- Binary Trees 
+    - Good for inserting data in the center and the ends 
+    - Root
+    - Parent 
+    - Child 
+    - Lead 
+    - Internal Node 
+    - Edge 
+    - Depth of Node 
+    - Height of Tree 
+    - Level 
+    - Subtree 
+    - Siblings 
+    - Full Binary Trees 
+        - Every node has 0 or 2 children 
+    - Complete binary tree 
+        - A full binary tree where the last level is full from left to right 
+    - Degenerate Tree 
+        - Every node has only one child 
+    - Traversal 
+        - Depth First Search 
+            - In Order 
+                - Left, Root, Right 
+                - BST Sorted Output 
+            - Pre-Order 
+                - Root, Left, Right
+                - Copy/Serialize 
+            - Post-Order 
+                - Left, Right, Root
+                - Delete/Evaluate 
+        - Breadth First Search
+            - Level-Order
+                - Level by Level 
+                - Heap Array Order 
+    - Two Heap Properties     
+        - Shape 
+            - Must be a complete binary tree 
+            - All levels filled
+        - Heap Order 
+            - 
+    - Can be represented with an array or a linked list
+        - When adding a new element, you add it at the end / at a new level, before sifting it up, swapping it with lower values until it cannot go any higher
+        - When removing the maximum, first replace the root with the final element and then sift down
+    - Operations 
+        - Insert 
+            - O(log n)
+        - Access Top 
+            - O(1)
+        - Remove Top
+            - O(log n) 
+        - Size 
+            -O(1)
+        - Empty Check
+            O(1)
+    - Heapsort Algorithm 
+        - An efficient comparison-based sorting algorithm that uses a binary heap
+        - Stats
+            - Best: O(log n)
+            - Average: O(log n)
+            - Worst: O(log n)
+            - Space: O(log n)
+            - Stable: No 
+            - In-Place: Yes
+        - Phase 1: Build Max-Heap
+            - COnvert the unsorted array into a valid max-heap using FLoyd's Algorithm 
+        - Phase 2: Sort by Extract 
+            - Repeatedly swap root (max) with last unsorted element and sift down  
+    - Binary Search Trees 
+        - The Root is the middle value, dividing the data set in half 
+        - Insert and remove are O(log n)
+        - All keys in the left subtree are smaller, and all keys in the right subtree are larger
+        - s
+- Symbol Tables 
+    - Data structure that stores key-value pairs 
+    - Keys can be used to find values, similar to array indexes
+    - Rules 
+        - No duplicate keys 
+        - No null values 
+        - Keys must not be null
+    - Dictionaries 
+- Context Switching 
+    - When the CPU switches which process it gives time to using saved states 
+
+2, 11, 12

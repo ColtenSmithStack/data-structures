@@ -1,0 +1,1624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 11 — Minimum Spanning Trees & Shortest Paths</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Fira+Code:wght@400;500&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #0d0f14;
+    --bg2:      #13161d;
+    --bg3:      #1a1e28;
+    --border:   #252a37;
+    --text:     #cdd3e0;
+    --text-dim: #6b7590;
+    --gold:     #f0b429;
+    --teal:     #2dd4bf;
+    --rose:     #fb7185;
+    --violet:   #a78bfa;
+    --green:    #4ade80;
+    --blue:     #60a5fa;
+    --orange:   #fb923c;
+    --glow-gold: 0 0 20px rgba(240,180,41,0.25);
+    --glow-teal: 0 0 20px rgba(45,212,191,0.25);
+    --glow-rose: 0 0 20px rgba(251,113,133,0.25);
+    --radius:   12px;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Lora', serif;
+    font-size: 17px;
+    line-height: 1.75;
+  }
+
+  /* ── HEADER ── */
+  header {
+    position: relative;
+    overflow: hidden;
+    padding: 80px 40px 60px;
+    text-align: center;
+    background: linear-gradient(160deg, #0d0f14 0%, #111624 60%, #0d1020 100%);
+    border-bottom: 1px solid var(--border);
+  }
+  header::before {
+    content:'';
+    position:absolute; inset:0;
+    background: radial-gradient(ellipse 70% 60% at 50% -10%, rgba(240,180,41,0.12) 0%, transparent 70%);
+    pointer-events:none;
+  }
+  .lecture-badge {
+    display:inline-block;
+    font-family:'Syne',sans-serif;
+    font-size:11px; font-weight:700; letter-spacing:3px; text-transform:uppercase;
+    color:var(--gold); border:1px solid rgba(240,180,41,0.4);
+    padding:5px 14px; border-radius:30px; margin-bottom:24px;
+    background:rgba(240,180,41,0.07);
+  }
+  header h1 {
+    font-family:'Syne',sans-serif;
+    font-size:clamp(2rem,5vw,3.6rem);
+    font-weight:800; letter-spacing:-1px; line-height:1.1;
+    background: linear-gradient(135deg, #f0b429 0%, #ffd97d 40%, #fb923c 100%);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    background-clip:text; margin-bottom:16px;
+  }
+  header p {
+    color:var(--text-dim); font-size:1.05rem; max-width:580px; margin:0 auto 36px;
+  }
+  .toc-chips { display:flex; flex-wrap:wrap; justify-content:center; gap:8px; }
+  .toc-chips a {
+    font-family:'Syne',sans-serif; font-size:12px; font-weight:600; letter-spacing:.5px;
+    padding:6px 16px; border-radius:30px; text-decoration:none;
+    border:1px solid var(--border); color:var(--text-dim);
+    transition:all .25s; background:var(--bg2);
+  }
+  .toc-chips a:hover { color:var(--gold); border-color:var(--gold); background:rgba(240,180,41,0.07); }
+
+  /* ── LAYOUT ── */
+  main { max-width:980px; margin:0 auto; padding:0 28px 80px; }
+
+  /* ── SECTION ── */
+  section {
+    padding: 64px 0 32px;
+    border-bottom: 1px solid var(--border);
+  }
+  section:last-child { border-bottom:none; }
+
+  .section-label {
+    font-family:'Syne',sans-serif; font-size:11px; font-weight:700;
+    letter-spacing:3px; text-transform:uppercase; color:var(--text-dim);
+    margin-bottom:10px;
+  }
+  h2 {
+    font-family:'Syne',sans-serif; font-size:clamp(1.6rem,3.5vw,2.4rem);
+    font-weight:800; letter-spacing:-0.5px; line-height:1.15;
+    margin-bottom:20px; color:#e8edf5;
+  }
+  h2 span { color:var(--gold); }
+  h3 {
+    font-family:'Syne',sans-serif; font-size:1.25rem; font-weight:700;
+    color:#dde2ef; margin:36px 0 12px;
+  }
+  h4 {
+    font-family:'Syne',sans-serif; font-size:1rem; font-weight:700;
+    color:var(--teal); margin:28px 0 10px; letter-spacing:.5px;
+  }
+  p { margin-bottom:16px; }
+  strong { color:#e8edf5; font-weight:600; }
+  em { color:var(--gold); font-style:normal; font-weight:500; }
+
+  /* ── ANALOGY BOXES ── */
+  .analogy {
+    border-left:3px solid var(--teal); background:rgba(45,212,191,0.06);
+    border-radius:0 var(--radius) var(--radius) 0;
+    padding:18px 22px; margin:24px 0;
+  }
+  .analogy-label {
+    font-family:'Syne',sans-serif; font-size:11px; font-weight:700;
+    letter-spacing:2px; text-transform:uppercase; color:var(--teal);
+    margin-bottom:8px;
+  }
+  .analogy p { margin:0; color:#b8c2d4; }
+
+  /* ── DEFINITION BOXES ── */
+  .definition {
+    border:1px solid rgba(167,139,250,0.35); background:rgba(167,139,250,0.06);
+    border-radius:var(--radius); padding:20px 24px; margin:24px 0;
+  }
+  .definition-label {
+    font-family:'Syne',sans-serif; font-size:11px; font-weight:700;
+    letter-spacing:2px; text-transform:uppercase; color:var(--violet);
+    margin-bottom:10px;
+  }
+  .definition p { margin:0; color:#cdd3e0; }
+
+  /* ── PROOF BOXES ── */
+  .proof {
+    border:1px solid rgba(251,113,133,0.3); background:rgba(251,113,133,0.05);
+    border-radius:var(--radius); padding:20px 24px; margin:24px 0;
+  }
+  .proof-label {
+    font-family:'Syne',sans-serif; font-size:11px; font-weight:700;
+    letter-spacing:2px; text-transform:uppercase; color:var(--rose);
+    margin-bottom:10px;
+  }
+  .proof p { margin:0 0 10px; color:#cdd3e0; font-size:.95rem; }
+  .proof p:last-child { margin:0; }
+
+  /* ── KEY INSIGHT ── */
+  .key-insight {
+    background: linear-gradient(135deg, rgba(240,180,41,0.1), rgba(251,146,60,0.06));
+    border:1px solid rgba(240,180,41,0.3); border-radius:var(--radius);
+    padding:20px 24px; margin:24px 0;
+    display:flex; gap:14px; align-items:flex-start;
+  }
+  .key-insight .icon { font-size:1.5rem; flex-shrink:0; margin-top:2px; }
+  .key-insight p { margin:0; color:#dde2ef; }
+
+  /* ── CODE ── */
+  .code-wrap {
+    background:var(--bg2); border:1px solid var(--border);
+    border-radius:var(--radius); overflow:hidden; margin:24px 0;
+  }
+  .code-header {
+    background:var(--bg3); padding:10px 18px;
+    display:flex; justify-content:space-between; align-items:center;
+    border-bottom:1px solid var(--border);
+  }
+  .code-lang {
+    font-family:'Syne',sans-serif; font-size:11px; font-weight:700;
+    letter-spacing:2px; text-transform:uppercase; color:var(--text-dim);
+  }
+  .code-title { font-family:'Syne',sans-serif; font-size:12px; color:var(--text-dim); }
+  pre {
+    padding:22px 24px; overflow-x:auto; font-family:'Fira Code',monospace;
+    font-size:13.5px; line-height:1.7; color:#cdd3e0;
+  }
+  .kw  { color:#c792ea; }
+  .fn  { color:#82aaff; }
+  .tp  { color:#ffcb6b; }
+  .cm  { color:#546e7a; font-style:italic; }
+  .st  { color:#c3e88d; }
+  .nm  { color:#f78c6c; }
+  .op  { color:#89ddff; }
+
+  /* ── STEP TRACE ── */
+  .trace-container { margin:24px 0; }
+  .trace-title {
+    font-family:'Syne',sans-serif; font-size:12px; font-weight:700;
+    letter-spacing:2px; text-transform:uppercase; color:var(--text-dim);
+    margin-bottom:12px;
+  }
+  .trace-step {
+    background:var(--bg2); border:1px solid var(--border);
+    border-radius:var(--radius); padding:16px 20px; margin-bottom:10px;
+    transition:border-color .2s;
+  }
+  .trace-step:hover { border-color:var(--gold); }
+  .trace-step-header {
+    display:flex; align-items:center; gap:12px; margin-bottom:8px;
+  }
+  .step-num {
+    background:var(--gold); color:var(--bg); font-family:'Syne',sans-serif;
+    font-size:12px; font-weight:800; width:28px; height:28px;
+    border-radius:50%; display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+  }
+  .step-num.teal  { background:var(--teal); }
+  .step-num.rose  { background:var(--rose); }
+  .step-num.violet{ background:var(--violet); }
+  .step-num.green { background:var(--green); }
+  .step-title {
+    font-family:'Syne',sans-serif; font-size:.95rem; font-weight:700;
+    color:#dde2ef;
+  }
+  .step-body { color:#b8c2d4; font-size:.93rem; padding-left:40px; }
+  .step-body code {
+    font-family:'Fira Code',monospace; font-size:12px;
+    background:var(--bg3); padding:2px 7px; border-radius:5px; color:var(--teal);
+  }
+  .step-body .accepted { color:var(--green); font-weight:600; }
+  .step-body .rejected { color:var(--rose); font-weight:600; }
+
+  /* ── COMPARISON TABLE ── */
+  .compare-table-wrap { overflow-x:auto; margin:24px 0; }
+  table { width:100%; border-collapse:collapse; }
+  th {
+    font-family:'Syne',sans-serif; font-size:12px; font-weight:700;
+    letter-spacing:1px; text-transform:uppercase;
+    color:var(--text-dim); padding:12px 16px; text-align:left;
+    background:var(--bg3); border-bottom:2px solid var(--border);
+  }
+  td {
+    padding:13px 16px; border-bottom:1px solid var(--border);
+    font-size:.92rem; color:#cdd3e0; vertical-align:top;
+  }
+  tr:last-child td { border-bottom:none; }
+  tr:hover td { background:rgba(255,255,255,0.02); }
+  td code {
+    font-family:'Fira Code',monospace; font-size:12px;
+    background:var(--bg3); padding:2px 7px; border-radius:5px; color:var(--teal);
+  }
+  .tag {
+    display:inline-block; font-family:'Syne',sans-serif; font-size:11px;
+    font-weight:700; letter-spacing:.5px; padding:2px 9px; border-radius:20px;
+  }
+  .tag-gold   { background:rgba(240,180,41,0.15); color:var(--gold); }
+  .tag-teal   { background:rgba(45,212,191,0.15); color:var(--teal); }
+  .tag-rose   { background:rgba(251,113,133,0.15); color:var(--rose); }
+  .tag-violet { background:rgba(167,139,250,0.15); color:var(--violet); }
+  .tag-green  { background:rgba(74,222,128,0.15); color:var(--green); }
+  .tag-blue   { background:rgba(96,165,250,0.15); color:var(--blue); }
+
+  /* ── SVG GRAPHS ── */
+  .graph-card {
+    background:var(--bg2); border:1px solid var(--border);
+    border-radius:var(--radius); padding:28px; margin:24px 0;
+  }
+  .graph-card-title {
+    font-family:'Syne',sans-serif; font-size:12px; font-weight:700;
+    letter-spacing:2px; text-transform:uppercase; color:var(--text-dim);
+    margin-bottom:18px; text-align:center;
+  }
+  svg { display:block; margin:0 auto; }
+  .node circle { cursor:pointer; transition:r .2s; }
+  .node circle:hover { r:18; }
+  .node text { font-family:'Syne',sans-serif; font-size:13px; font-weight:800; }
+  .edge-label { font-family:'Fira Code',monospace; font-size:11px; }
+
+  /* ── ALGO CARD ── */
+  .algo-card {
+    background:var(--bg2); border:1px solid var(--border);
+    border-radius:var(--radius); overflow:hidden; margin:24px 0;
+  }
+  .algo-card-header {
+    padding:18px 24px; display:flex; align-items:center; gap:14px;
+    border-bottom:1px solid var(--border);
+  }
+  .algo-icon {
+    width:42px; height:42px; border-radius:10px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:1.3rem; flex-shrink:0;
+  }
+  .algo-card-body { padding:22px 24px; }
+  .stats-row {
+    display:flex; flex-wrap:wrap; gap:16px; margin-top:16px;
+  }
+  .stat-pill {
+    background:var(--bg3); border:1px solid var(--border);
+    border-radius:8px; padding:8px 16px;
+    font-family:'Syne',sans-serif; font-size:12px;
+  }
+  .stat-pill span { display:block; color:var(--text-dim); font-size:10px; letter-spacing:1px; text-transform:uppercase; margin-bottom:3px; }
+  .stat-pill strong { font-size:15px; font-family:'Fira Code',monospace; }
+
+  /* ── CALLOUT ── */
+  .callout {
+    display:flex; gap:14px; align-items:flex-start;
+    background:var(--bg2); border:1px solid var(--border);
+    border-radius:var(--radius); padding:18px 20px; margin:20px 0;
+  }
+  .callout .ci { font-size:1.2rem; flex-shrink:0; margin-top:2px; }
+  .callout p { margin:0; font-size:.93rem; color:#b8c2d4; }
+  .callout.warn { border-color:rgba(251,113,133,0.3); background:rgba(251,113,133,0.05); }
+  .callout.warn .ci::before { content:'⚠️'; }
+  .callout.info { border-color:rgba(96,165,250,0.3); background:rgba(96,165,250,0.05); }
+  .callout.info .ci::before { content:'💡'; }
+  .callout.success { border-color:rgba(74,222,128,0.3); background:rgba(74,222,128,0.05); }
+  .callout.success .ci::before { content:'✅'; }
+
+  /* ── COMPLEXITY VISUAL ── */
+  .complexity-bar-wrap { margin:20px 0; }
+  .cbar-row { display:flex; align-items:center; gap:14px; margin-bottom:14px; }
+  .cbar-label { width:130px; flex-shrink:0; font-family:'Syne',sans-serif; font-size:13px; font-weight:700; color:#dde2ef; }
+  .cbar-track { flex:1; height:28px; background:var(--bg3); border-radius:6px; overflow:hidden; }
+  .cbar-fill {
+    height:100%; border-radius:6px;
+    display:flex; align-items:center; padding:0 12px;
+    font-family:'Fira Code',monospace; font-size:12px; font-weight:500;
+    transition: width 1s cubic-bezier(.25,.46,.45,.94);
+  }
+  .cbar-fill.fast { background:linear-gradient(90deg,#059669,#34d399); width:30%; color:#d1fae5; }
+  .cbar-fill.medium { background:linear-gradient(90deg,#d97706,#fbbf24); width:55%; color:#fef3c7; }
+  .cbar-fill.slow { background:linear-gradient(90deg,#dc2626,#f87171); width:85%; color:#fee2e2; }
+
+  /* ── STEP INTERACTIVE ── */
+  .interactive-trace { margin:24px 0; }
+  .it-controls { display:flex; gap:10px; margin-bottom:16px; align-items:center; }
+  .it-btn {
+    font-family:'Syne',sans-serif; font-size:12px; font-weight:700;
+    letter-spacing:1px; padding:8px 18px; border-radius:8px; cursor:pointer;
+    border:1px solid var(--border); background:var(--bg2); color:var(--text-dim);
+    transition:all .2s;
+  }
+  .it-btn:hover { border-color:var(--gold); color:var(--gold); }
+  .it-btn.active { background:var(--gold); color:var(--bg); border-color:var(--gold); }
+  .it-step-display {
+    background:var(--bg2); border:1px solid var(--border);
+    border-radius:var(--radius); padding:22px 26px; min-height:120px;
+  }
+  .it-counter {
+    font-family:'Syne',sans-serif; font-size:11px; letter-spacing:2px;
+    text-transform:uppercase; color:var(--text-dim); margin-bottom:12px;
+  }
+  .it-step-title { font-family:'Syne',sans-serif; font-size:1.1rem; font-weight:700; color:var(--gold); margin-bottom:8px; }
+  .it-step-body { color:#b8c2d4; font-size:.92rem; }
+  .it-step-body code { font-family:'Fira Code',monospace; font-size:12px; background:var(--bg3); padding:2px 7px; border-radius:4px; color:var(--teal); }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top:1px solid var(--border);
+    padding:36px 28px; text-align:center;
+    color:var(--text-dim); font-size:.85rem;
+    font-family:'Syne',sans-serif; letter-spacing:1px;
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width:6px; height:6px; }
+  ::-webkit-scrollbar-track { background:var(--bg); }
+  ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+
+  /* ── FADE IN ── */
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(24px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+  section { animation: fadeUp .6s ease both; }
+
+  /* responsive */
+  @media(max-width:640px){
+    header { padding:50px 20px 40px; }
+    main { padding:0 16px 60px; }
+    .stats-row { flex-direction:column; }
+    .cbar-label { width:90px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════ HEADER -->
+<header>
+  <div class="lecture-badge">Lecture 11 of 12 · Data Structures &amp; Algorithms</div>
+  <h1>Minimum Spanning Trees<br>&amp; Shortest Paths</h1>
+  <p>A complete beginner-friendly walkthrough of Kruskal's, Prim's, Dijkstra's, and Bellman-Ford algorithms — with full traces, visuals, and C++ code.</p>
+  <div class="toc-chips">
+    <a href="#intro">Edge-Weighted Graphs</a>
+    <a href="#mst">Spanning Trees</a>
+    <a href="#kruskal">Kruskal's</a>
+    <a href="#prim">Prim's</a>
+    <a href="#dijkstra">Dijkstra's</a>
+    <a href="#bellman">Bellman-Ford</a>
+    <a href="#compare">Comparison</a>
+  </div>
+</header>
+
+<main>
+
+<!-- ══════════════════════════════════════════ PART I -->
+<section id="intro">
+  <div class="section-label">Part I</div>
+  <h2>Edge-<span>Weighted</span> Graphs</h2>
+
+  <p>In earlier lectures you learned about plain graphs — networks of vertices connected by edges. But in the real world, connections have <strong>costs</strong>. A road has a distance. A network link has a latency. A flight route has a price. To model this we need <strong>edge-weighted graphs</strong>, where every edge carries a numerical weight.</p>
+
+  <div class="analogy">
+    <div class="analogy-label">Real-World Analogy</div>
+    <p>Think of a map of cities connected by highways. Each highway has a length (in miles). That's an edge-weighted graph. The cities are <em>vertices</em>, the highways are <em>edges</em>, and the mileage is the <em>weight</em>.</p>
+  </div>
+
+  <h3>The Weighted Edge Object</h3>
+  <p>Rather than just storing "there is a connection between A and B," we store the full triple: <strong>vertex A</strong>, <strong>vertex B</strong>, and the <strong>weight</strong>. In C++ this looks like:</p>
+
+  <div class="code-wrap">
+    <div class="code-header">
+      <span class="code-lang">C++</span>
+      <span class="code-title">Weighted Edge — the basic building block</span>
+    </div>
+    <pre><span class="cm">// ─── WEIGHTED EDGE ────────────────────────────────────────────────────────
+// Stores the triple: (vertex A, vertex B, cost).
+// Either endpoint can be called first, then other(x) gives the far side.
+// operator&lt; enables sorting edges by weight for Kruskal's.
+//
+// Usage pattern:
+//   int u = e.either();      // pick one endpoint
+//   int v = e.other(u);      // get the other endpoint
+//   double w = e.weight;     // get the cost
+// ─────────────────────────────────────────────────────────────────────────</span>
+<span class="kw">struct</span> <span class="tp">Edge</span> {
+    <span class="tp">int</span>    v, w;       <span class="cm">// two endpoints of the edge</span>
+    <span class="tp">double</span> weight;    <span class="cm">// the cost / distance / weight</span>
+
+    <span class="cm">// Return either endpoint (call this first)</span>
+    <span class="tp">int</span> <span class="fn">either</span>()          { <span class="kw">return</span> v; }
+
+    <span class="cm">// Given one endpoint, return the OTHER endpoint</span>
+    <span class="tp">int</span> <span class="fn">other</span>(<span class="tp">int</span> vertex) {
+        <span class="kw">if</span> (vertex == v) <span class="kw">return</span> w;
+        <span class="kw">if</span> (vertex == w) <span class="kw">return</span> v;
+        <span class="kw">throw</span> <span class="st">"Inconsistent edge"</span>;
+    }
+
+    <span class="cm">// Allows sorting edges by weight (used by Kruskal's)</span>
+    <span class="tp">bool</span> <span class="kw">operator</span><span class="op">&lt;</span>(<span class="kw">const</span> <span class="tp">Edge</span><span class="op">&amp;</span> that) <span class="kw">const</span> {
+        <span class="kw">return</span> weight <span class="op">&lt;</span> that.weight;
+    }
+};</pre>
+  </div>
+
+  <div class="callout info"><div class="ci"></div><p>The <code>other(vertex)</code> method is brilliantly useful: when you're at one endpoint and want to find where the edge leads, just call <code>other(currentVertex)</code>. No if-else needed in client code.</p></div>
+
+  <h3>The Edge-Weighted Graph</h3>
+  <p>An edge-weighted graph stores an <strong>adjacency list</strong> — for each vertex, a list of all edges touching it. Since each edge is undirected, it appears in <em>two</em> lists (once for each endpoint).</p>
+
+  <div class="code-wrap">
+    <div class="code-header">
+      <span class="code-lang">C++</span>
+      <span class="code-title">WeightedGraph — adjacency-list representation</span>
+    </div>
+    <pre><span class="cm">// ─── WEIGHTED GRAPH (Adjacency-List Representation) ───────────────────────
+// adj[v] holds all edges that TOUCH vertex v.
+// Each undirected edge is stored TWICE — once per endpoint.
+//
+// Example state after addEdge({A, B, 4.0}) and addEdge({A, C, 2.0}):
+//   adj[A] = [ (A-B,4.0), (A-C,2.0) ]
+//   adj[B] = [ (A-B,4.0) ]
+//   adj[C] = [ (A-C,2.0) ]
+// ─────────────────────────────────────────────────────────────────────────</span>
+<span class="kw">class</span> <span class="tp">WeightedGraph</span> {
+<span class="kw">public</span>:
+    <span class="tp">int</span> V, E;                              <span class="cm">// vertex count, edge count</span>
+    vector<span class="op">&lt;</span>vector<span class="op">&lt;</span><span class="tp">Edge</span><span class="op">&gt;&gt;</span> adj;             <span class="cm">// adj[v] = list of edges at vertex v</span>
+
+    <span class="fn">WeightedGraph</span>(<span class="tp">int</span> V) : V(V), E(<span class="nm">0</span>), adj(V) {}
+
+    <span class="kw">void</span> <span class="fn">addEdge</span>(<span class="tp">Edge</span> e) {
+        <span class="tp">int</span> v <span class="op">=</span> e.<span class="fn">either</span>();
+        <span class="tp">int</span> w <span class="op">=</span> e.<span class="fn">other</span>(v);
+        adj[v].<span class="fn">push_back</span>(e);   <span class="cm">// add to v's list</span>
+        adj[w].<span class="fn">push_back</span>(e);   <span class="cm">// add to w's list (undirected = stored at BOTH ends)</span>
+        E<span class="op">++</span>;
+    }
+};</pre>
+  </div>
+
+  <div class="definition">
+    <div class="definition-label">Space Complexity</div>
+    <p>The adjacency-list representation uses <strong>Θ(V + E)</strong> space — one slot per vertex, plus two slots per edge (one for each endpoint's list). For sparse graphs (few edges), this is far better than a V × V matrix.</p>
+  </div>
+
+  <h3>Directed vs. Undirected Weighted Graphs</h3>
+  <p>For <strong>MST algorithms</strong> (Kruskal's, Prim's) we use <em>undirected</em> graphs — edges go both ways. For <strong>shortest path algorithms</strong> (Dijkstra's, Bellman-Ford) we use <em>directed</em> graphs — each edge has a specific direction (from → to). A directed edge uses <code>from()</code> and <code>to()</code> instead of <code>either()</code> and <code>other()</code>, and is only added to <em>one</em> adjacency list.</p>
+</section>
+
+<!-- ══════════════════════════════════════════ PART II -->
+<section id="mst">
+  <div class="section-label">Part II</div>
+  <h2>Minimum <span>Spanning</span> Trees</h2>
+
+  <p>Given a connected, undirected, edge-weighted graph, a <strong>spanning tree</strong> is a subset of edges that connects every vertex with no cycles — the cheapest possible "backbone." The <strong>minimum spanning tree (MST)</strong> is the spanning tree with the smallest total edge weight.</p>
+
+  <div class="analogy">
+    <div class="analogy-label">Real-World Analogy</div>
+    <p>You need to lay cables to connect 10 towns. Each possible cable segment has a cost. You want every town connected while spending the minimum total amount on cable. The set of cables you choose is the MST.</p>
+  </div>
+
+  <div class="definition">
+    <div class="definition-label">Definition — Spanning Tree</div>
+    <p>A spanning tree of a connected graph with <strong>V</strong> vertices is a subgraph that is:<br>
+    (1) connected — you can reach every vertex,<br>
+    (2) acyclic — no loops,<br>
+    (3) has exactly <strong>V − 1</strong> edges.</p>
+  </div>
+
+  <!-- SVG: example graph -->
+  <div class="graph-card">
+    <div class="graph-card-title">Example: 4-Vertex Graph &amp; Its MST</div>
+    <svg width="520" height="200" viewBox="0 0 520 200">
+      <!-- ORIGINAL GRAPH -->
+      <text x="120" y="20" text-anchor="middle" font-family="Syne,sans-serif" font-size="12" fill="#6b7590" letter-spacing="2">ORIGINAL GRAPH</text>
+      <!-- edges -->
+      <line x1="80" y1="50" x2="160" y2="50" stroke="#3a4055" stroke-width="2"/>
+      <text x="120" y="43" text-anchor="middle" font-family="Fira Code,monospace" font-size="11" fill="#f0b429">4</text>
+      <line x1="80" y1="50" x2="80" y2="140" stroke="#3a4055" stroke-width="2"/>
+      <text x="68" y="100" text-anchor="middle" font-family="Fira Code,monospace" font-size="11" fill="#f0b429">2</text>
+      <line x1="80" y1="140" x2="160" y2="140" stroke="#3a4055" stroke-width="2"/>
+      <text x="120" y="158" text-anchor="middle" font-family="Fira Code,monospace" font-size="11" fill="#f0b429">5</text>
+      <line x1="160" y1="50" x2="160" y2="140" stroke="#3a4055" stroke-width="2"/>
+      <text x="172" y="100" text-anchor="middle" font-family="Fira Code,monospace" font-size="11" fill="#f0b429">3</text>
+      <line x1="80" y1="50" x2="160" y2="140" stroke="#3a4055" stroke-width="2"/>
+      <text x="128" y="103" text-anchor="middle" font-family="Fira Code,monospace" font-size="11" fill="#f0b429">7</text>
+      <!-- nodes -->
+      <circle cx="80" cy="50" r="16" fill="#1a1e28" stroke="#6b7590" stroke-width="2"/>
+      <text x="80" y="55" text-anchor="middle" font-family="Syne,sans-serif" font-size="13" font-weight="800" fill="#cdd3e0">A</text>
+      <circle cx="160" cy="50" r="16" fill="#1a1e28" stroke="#6b7590" stroke-width="2"/>
+      <text x="160" y="55" text-anchor="middle" font-family="Syne,sans-serif" font-size="13" font-weight="800" fill="#cdd3e0">B</text>
+      <circle cx="80" cy="140" r="16" fill="#1a1e28" stroke="#6b7590" stroke-width="2"/>
+      <text x="80" y="145" text-anchor="middle" font-family="Syne,sans-serif" font-size="13" font-weight="800" fill="#cdd3e0">C</text>
+      <circle cx="160" cy="140" r="16" fill="#1a1e28" stroke="#6b7590" stroke-width="2"/>
+      <text x="160" y="145" text-anchor="middle" font-family="Syne,sans-serif" font-size="13" font-weight="800" fill="#cdd3e0">D</text>
+
+      <!-- ARROW -->
+      <text x="230" y="100" text-anchor="middle" font-size="24" fill="#f0b429">→</text>
+      <text x="230" y="120" text-anchor="middle" font-family="Syne,sans-serif" font-size="10" fill="#6b7590">MST</text>
+
+      <!-- MST GRAPH -->
+      <text x="390" y="20" text-anchor="middle" font-family="Syne,sans-serif" font-size="12" fill="#6b7590" letter-spacing="2">MINIMUM SPANNING TREE</text>
+      <!-- MST edges highlighted -->
+      <line x1="350" y1="50" x2="350" y2="140" stroke="#2dd4bf" stroke-width="3"/>
+      <text x="338" y="100" text-anchor="middle" font-family="Fira Code,monospace" font-size="11" fill="#2dd4bf">2</text>
+      <line x1="350" y1="140" x2="430" y2="140" stroke="#3a4055" stroke-width="2" stroke-dasharray="4,3"/>
+      <line x1="430" y1="50" x2="430" y2="140" stroke="#2dd4bf" stroke-width="3"/>
+      <text x="442" y="100" text-anchor="middle" font-family="Fira Code,monospace" font-size="11" fill="#2dd4bf">3</text>
+      <line x1="350" y1="50" x2="430" y2="50" stroke="#2dd4bf" stroke-width="3"/>
+      <text x="390" y="43" text-anchor="middle" font-family="Fira Code,monospace" font-size="11" fill="#2dd4bf">4</text>
+      <!-- nodes -->
+      <circle cx="350" cy="50" r="16" fill="#1a1e28" stroke="#2dd4bf" stroke-width="2"/>
+      <text x="350" y="55" text-anchor="middle" font-family="Syne,sans-serif" font-size="13" font-weight="800" fill="#2dd4bf">A</text>
+      <circle cx="430" cy="50" r="16" fill="#1a1e28" stroke="#2dd4bf" stroke-width="2"/>
+      <text x="430" y="55" text-anchor="middle" font-family="Syne,sans-serif" font-size="13" font-weight="800" fill="#2dd4bf">B</text>
+      <circle cx="350" cy="140" r="16" fill="#1a1e28" stroke="#2dd4bf" stroke-width="2"/>
+      <text x="350" y="145" text-anchor="middle" font-family="Syne,sans-serif" font-size="13" font-weight="800" fill="#2dd4bf">C</text>
+      <circle cx="430" cy="140" r="16" fill="#1a1e28" stroke="#6b7590" stroke-width="2"/>
+      <text x="430" y="145" text-anchor="middle" font-family="Syne,sans-serif" font-size="13" font-weight="800" fill="#cdd3e0">D</text>
+      <text x="390" y="180" text-anchor="middle" font-family="Syne,sans-serif" font-size="11" fill="#6b7590">Total weight: 2+4+3 = 9 (minimum)</text>
+    </svg>
+  </div>
+
+  <h3>The Cut Property — the Key Theorem</h3>
+  <p>Every efficient MST algorithm is based on one powerful theorem: the <strong>Cut Property</strong>. Before we state it, we need to know what a "cut" is.</p>
+
+  <div class="definition">
+    <div class="definition-label">Definition — Cut</div>
+    <p>A <strong>cut</strong> is any way of dividing the vertices into two non-empty groups: group S and group (V − S). An edge <strong>crosses the cut</strong> if one endpoint is in S and the other is in V − S.</p>
+  </div>
+
+  <div class="definition">
+    <div class="definition-label">Proposition A — The Cut Property</div>
+    <p>Let e be the <em>unique minimum-weight edge</em> that crosses any cut (S, V − S). Then <strong>e must be in every MST</strong>.</p>
+  </div>
+
+  <div class="proof">
+    <div class="proof-label">Proof (by contradiction)</div>
+    <p>Suppose T is an MST that does <em>not</em> contain e. Since T is a spanning tree, it has a path from u to v (the endpoints of e). That path must cross our cut somewhere — at an edge f.</p>
+    <p>Since e is the unique minimum-weight crossing edge, w(f) > w(e). Now swap f out for e: build T' = T − {f} + {e}. T' is still a spanning tree, but its total weight is less than T's. Contradiction — T was supposed to be minimum! So e must be in the MST. ∎</p>
+  </div>
+
+  <h3>The Cycle Property — what definitely is NOT in the MST</h3>
+
+  <div class="definition">
+    <div class="definition-label">Proposition B — The Cycle Property</div>
+    <p>The <strong>maximum-weight edge in any cycle</strong> is <em>never</em> in the MST (assuming all weights are distinct).</p>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-label">Why It Makes Sense</div>
+    <p>If you have a loop, the most expensive edge in that loop is redundant — you can go around the loop the other way at lower cost. The MST would always prefer the cheaper route.</p>
+  </div>
+
+  <h3>The Generic Greedy MST Algorithm</h3>
+  <p>Both Kruskal's and Prim's algorithms are special cases of this simple greedy recipe:</p>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">Pseudocode</span><span class="code-title">Generic Greedy MST</span></div>
+    <pre><span class="cm">// ─── GENERIC GREEDY MST ────────────────────────────────────────────────────
+// Plain English:
+//   ① Start with an empty tree T
+//   ② Find any cut where NO edge of T crosses it
+//   ③ Add the minimum-weight crossing edge to T
+//   ④ Repeat until T has V-1 edges (spanning tree is complete)
+//
+// Kruskal's and Prim's each find the cut differently:
+//   Kruskal's:  cuts separate components (tracked by Union-Find)
+//   Prim's:     cut = {tree vertices} vs {non-tree vertices}
+// ─────────────────────────────────────────────────────────────────────────</span>
+T = {}  <span class="cm">// empty set — will become the MST</span>
+
+<span class="kw">while</span> |T| &lt; V - 1:
+    Find a cut where no edge of T crosses it
+    Add the minimum-weight crossing edge to T
+
+<span class="kw">return</span> T</pre>
+  </div>
+  <div class="callout success"><div class="ci"></div><p>Correctness is guaranteed by the Cut Property: at every step, the cheapest crossing edge must be in the MST — so we're always safe to add it.</p></div>
+</section>
+
+<!-- ══════════════════════════════════════════ PART III: KRUSKAL -->
+<section id="kruskal">
+  <div class="section-label">Part III</div>
+  <h2>Kruskal's <span>Algorithm</span></h2>
+
+  <div class="algo-card">
+    <div class="algo-card-header">
+      <div class="algo-icon" style="background:rgba(240,180,41,0.15);">🔗</div>
+      <div>
+        <div style="font-family:Syne,sans-serif;font-size:1.1rem;font-weight:800;color:#e8edf5;">Kruskal's Algorithm</div>
+        <div style="font-size:.88rem;color:var(--text-dim);">Sort all edges, greedily add the cheapest that doesn't create a cycle</div>
+      </div>
+    </div>
+    <div class="algo-card-body">
+      <div class="stats-row">
+        <div class="stat-pill"><span>Time</span><strong style="color:var(--gold);">O(E log E)</strong></div>
+        <div class="stat-pill"><span>Space</span><strong style="color:var(--teal);">O(V + E)</strong></div>
+        <div class="stat-pill"><span>Data Structure</span><strong style="color:var(--violet);">Union-Find</strong></div>
+        <div class="stat-pill"><span>Best For</span><strong style="color:var(--green);">Sparse Graphs</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <h3>The Core Idea</h3>
+  <p>Kruskal's strategy is beautifully simple: <strong>sort every edge in the graph by weight</strong> (cheapest first), then walk through the sorted list and add each edge to the MST — <em>unless</em> it would create a cycle (connecting two vertices already in the same component).</p>
+
+  <div class="analogy">
+    <div class="analogy-label">Analogy — Building a Road Network</div>
+    <p>Imagine you have a list of all possible roads, sorted by construction cost. You build the cheapest road first, then the next cheapest, skipping any road that would create a redundant loop (both towns it connects are already reachable from each other).</p>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C++</span><span class="code-title">Kruskal's MST Algorithm</span></div>
+    <pre><span class="cm">// ─── KRUSKAL'S MST ALGORITHM ──────────────────────────────────────────────
+// Plain English:
+//   ① Collect ALL edges and sort them cheapest-first          O(E log E)
+//   ② Walk through sorted edges one by one
+//   ③ For each edge (v, w): ask "are v and w already connected?"
+//        YES (same component) → skip  — adding it would create a cycle
+//        NO  (different components) → add edge to MST, merge components
+//   ④ Stop as soon as MST has V-1 edges
+//
+// State after the first 3 accepted edges (out of 8 vertices):
+//   Union-Find components: {0,7}, {2,3}, {1}  → 5 separate components
+//   MST so far: [ (0-7,0.16), (2-3,0.17), (1-7,0.19) ]
+// ─────────────────────────────────────────────────────────────────────────</span>
+<span class="kw">vector</span><span class="op">&lt;</span><span class="tp">Edge</span><span class="op">&gt;</span> <span class="fn">kruskalMST</span>(<span class="tp">WeightedGraph</span><span class="op">&amp;</span> G) {
+    vector<span class="op">&lt;</span><span class="tp">Edge</span><span class="op">&gt;</span> mst;
+
+    <span class="cm">// Step 1: collect all edges and SORT by weight</span>
+    vector<span class="op">&lt;</span><span class="tp">Edge</span><span class="op">&gt;</span> edges <span class="op">=</span> G.<span class="fn">allEdges</span>();
+    <span class="fn">sort</span>(edges.<span class="fn">begin</span>(), edges.<span class="fn">end</span>());   <span class="cm">// cheapest first</span>
+
+    <span class="cm">// Step 2: Union-Find tracks which component each vertex is in</span>
+    <span class="tp">UnionFind</span> uf(G.V);
+
+    <span class="kw">for</span> (<span class="tp">Edge</span><span class="op">&amp;</span> e : edges) {
+        <span class="tp">int</span> v <span class="op">=</span> e.<span class="fn">either</span>(), w <span class="op">=</span> e.<span class="fn">other</span>(v);
+
+        <span class="cm">// If v and w are in DIFFERENT components, this edge won't create a cycle</span>
+        <span class="kw">if</span> (uf.<span class="fn">find</span>(v) <span class="op">!=</span> uf.<span class="fn">find</span>(w)) {
+            mst.<span class="fn">push_back</span>(e);      <span class="cm">// accept this edge</span>
+            uf.<span class="fn">unite</span>(v, w);         <span class="cm">// merge the two components into one</span>
+        }
+        <span class="cm">// Otherwise: same component → would create a cycle → skip</span>
+
+        <span class="kw">if</span> (mst.<span class="fn">size</span>() <span class="op">==</span> G.V <span class="op">-</span> <span class="nm">1</span>) <span class="kw">break</span>;  <span class="cm">// MST is complete: V-1 edges found</span>
+    }
+    <span class="kw">return</span> mst;
+}</pre>
+  </div>
+
+  <h3>The Union-Find Data Structure</h3>
+  <p>The magic behind Kruskal's efficiency is <strong>Union-Find</strong> (also called Disjoint Set Union). It answers one question incredibly fast: <em>"Are two vertices in the same connected component?"</em></p>
+
+  <p>It maintains a forest of trees where each tree represents one component. Two operations:</p>
+  <ul style="margin:0 0 16px 24px; color:#b8c2d4;">
+    <li style="margin-bottom:8px;"><strong>find(x)</strong> — returns the "root" (representative) of x's component. If find(x) == find(y), they're connected.</li>
+    <li style="margin-bottom:8px;"><strong>union(x, y)</strong> — merges the components containing x and y into one.</li>
+  </ul>
+
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C++</span><span class="code-title">Union-Find with Path Compression + Union by Rank</span></div>
+    <pre><span class="cm">// ─── UNION-FIND (Disjoint Set Union) ──────────────────────────────────────
+// Each component is a tree.  parent[x] points toward the root.
+// Root = representative of the component.  find(x) == find(y) ↔ same component.
+//
+// TWO key optimizations that make it nearly O(1):
+//
+//  ① PATH COMPRESSION (halving):
+//     Before:  x → parent[x] → grandparent → ... → root
+//     After :  x → grandparent → ... → root  (skip one level each call)
+//     Effect : tree flattens over time
+//
+//  ② UNION BY RANK:
+//     Always attach the SHORTER tree under the TALLER tree.
+//     Prevents trees from growing tall (worst case depth = O(log N)).
+//
+// Together they give O(α(N)) per operation — effectively O(1).
+// ─────────────────────────────────────────────────────────────────────────</span>
+<span class="kw">class</span> <span class="tp">UnionFind</span> {
+    vector<span class="op">&lt;</span><span class="tp">int</span><span class="op">&gt;</span> parent, rank;
+<span class="kw">public</span>:
+    <span class="fn">UnionFind</span>(<span class="tp">int</span> n) : parent(n), rank(n, <span class="nm">0</span>) {
+        <span class="kw">for</span> (<span class="tp">int</span> i <span class="op">=</span> <span class="nm">0</span>; i <span class="op">&lt;</span> n; i<span class="op">++</span>) parent[i] <span class="op">=</span> i;  <span class="cm">// each vertex is its own root</span>
+    }
+
+    <span class="cm">// Find root of x, with PATH COMPRESSION (halving)
+    // Each call: x skips one level → parent[x] = grandparent
+    // Example: find(8) on chain 8→4→2→0  becomes  8→2→0 after one call</span>
+    <span class="tp">int</span> <span class="fn">find</span>(<span class="tp">int</span> x) {
+        <span class="kw">while</span> (parent[x] <span class="op">!=</span> x) {
+            parent[x] <span class="op">=</span> parent[parent[x]];  <span class="cm">// SKIP a level: point to grandparent</span>
+            x <span class="op">=</span> parent[x];
+        }
+        <span class="kw">return</span> x;
+    }
+
+    <span class="cm">// Merge components of x and y using UNION BY RANK
+    // Rank ≈ upper bound on tree height.
+    // Attach shorter tree (lower rank) UNDER taller tree (higher rank)
+    // to keep the combined tree as flat as possible.</span>
+    <span class="kw">void</span> <span class="fn">unite</span>(<span class="tp">int</span> x, <span class="tp">int</span> y) {
+        <span class="tp">int</span> rx <span class="op">=</span> <span class="fn">find</span>(x), ry <span class="op">=</span> <span class="fn">find</span>(y);
+        <span class="kw">if</span> (rx <span class="op">==</span> ry) <span class="kw">return</span>;  <span class="cm">// already same component — nothing to do</span>
+
+        <span class="kw">if</span>      (rank[rx] <span class="op">&lt;</span> rank[ry]) parent[rx] <span class="op">=</span> ry;  <span class="cm">// rx is shorter → attach under ry</span>
+        <span class="kw">else if</span> (rank[rx] <span class="op">&gt;</span> rank[ry]) parent[ry] <span class="op">=</span> rx;  <span class="cm">// ry is shorter → attach under rx</span>
+        <span class="kw">else</span> { parent[ry] <span class="op">=</span> rx; rank[rx]<span class="op">++</span>; }            <span class="cm">// equal height: pick rx, increase rank</span>
+    }
+};</pre>
+  </div>
+
+  <div class="key-insight">
+    <div class="icon">⚡</div>
+    <p>With <strong>path compression</strong> + <strong>union by rank</strong>, each find/union takes essentially <em>constant</em> amortized time — O(α(N)) where α is the inverse Ackermann function, which is ≤ 5 for any realistic input. This makes Union-Find one of the most practically efficient data structures ever invented.</p>
+  </div>
+
+  <div class="callout success"><div class="ci"></div>
+    <p><strong>🔑 The Inverse Ackermann Function — Why it's "basically O(1)"</strong><br>
+    α(N) is the inverse of the Ackermann function, which grows so astronomically fast that its inverse barely moves. For all practical purposes:<br>
+    α(N) ≤ 4 for N ≤ 2<sup>65536</sup> (more atoms than the observable universe)<br>
+    So "O(α(N))" really means "constant for every input you will ever see in your career." Kruskal's total cost is dominated entirely by the O(E log E) sort — Union-Find is essentially free.</p>
+  </div>
+
+  <h3>Full Trace: Kruskal's on 8 Vertices</h3>
+  <p>Graph has 8 vertices (0–7) and 16 edges. We sort all edges by weight and process:</p>
+
+  <div class="trace-container">
+    <div class="trace-title">Step-by-Step Execution</div>
+
+    <div class="trace-step">
+      <div class="trace-step-header">
+        <div class="step-num">1</div>
+        <div class="step-title">Process edge (0–7, weight 0.16)</div>
+      </div>
+      <div class="step-body">find(0) = 0, find(7) = 7 → different components<br>
+      <span class="accepted">✓ Accept</span> — add to MST. Union(0, 7). Components: <code>{0,7}, {1}, {2}, {3}, {4}, {5}, {6}</code></div>
+    </div>
+
+    <div class="trace-step">
+      <div class="trace-step-header">
+        <div class="step-num teal">2</div>
+        <div class="step-title">Process edge (2–3, weight 0.17)</div>
+      </div>
+      <div class="step-body">find(2) = 2, find(3) = 3 → different<br>
+      <span class="accepted">✓ Accept</span> — Union(2,3). Components: <code>{0,7}, {1}, {2,3}, {4}, {5}, {6}</code></div>
+    </div>
+
+    <div class="trace-step">
+      <div class="trace-step-header">
+        <div class="step-num violet">3</div>
+        <div class="step-title">Process edge (1–7, weight 0.19)</div>
+      </div>
+      <div class="step-body">find(1) = 1, find(7) = 0 (7's root is 0, from step 1)<br>
+      <span class="accepted">✓ Accept</span> — Union(1, 0). Components: <code>{0,1,7}, {2,3}, {4}, {5}, {6}</code></div>
+    </div>
+
+    <div class="trace-step">
+      <div class="trace-step-header">
+        <div class="step-num green">4</div>
+        <div class="step-title">Process edge (0–2, weight 0.26)</div>
+      </div>
+      <div class="step-body">find(0) = 0, find(2) = 2 → different<br>
+      <span class="accepted">✓ Accept</span> — Union(0, 2). Components: <code>{0,1,2,3,7}, {4}, {5}, {6}</code></div>
+    </div>
+
+    <div class="trace-step">
+      <div class="trace-step-header">
+        <div class="step-num">5</div>
+        <div class="step-title">Process edge (5–7, weight 0.28)</div>
+      </div>
+      <div class="step-body">find(5) = 5, find(7) = 0 → different<br>
+      <span class="accepted">✓ Accept</span> — Union(5, 0). Components: <code>{0,1,2,3,5,7}, {4}, {6}</code></div>
+    </div>
+
+    <div class="trace-step">
+      <div class="trace-step-header">
+        <div class="step-num rose">6</div>
+        <div class="step-title">Process edge (1–3, weight 0.29)</div>
+      </div>
+      <div class="step-body">find(1) = 0, find(3) = 0 → <strong>same component!</strong><br>
+      <span class="rejected">✗ Reject</span> — would create a cycle inside <code>{0,1,2,3,5,7}</code></div>
+    </div>
+
+    <div class="trace-step">
+      <div class="trace-step-header">
+        <div class="step-num teal">7</div>
+        <div class="step-title">... skip (1–5, 2–7) — both create cycles ...</div>
+      </div>
+      <div class="step-body"><span class="rejected">✗ Reject</span> all — same component</div>
+    </div>
+
+    <div class="trace-step">
+      <div class="trace-step-header">
+        <div class="step-num green">8</div>
+        <div class="step-title">Process edge (4–5, weight 0.35)</div>
+      </div>
+      <div class="step-body">find(4) = 4, find(5) = 0 → different<br>
+      <span class="accepted">✓ Accept</span> — Union(4, 0). Components: <code>{0,1,2,3,4,5,7}, {6}</code></div>
+    </div>
+
+    <div class="trace-step">
+      <div class="trace-step-header">
+        <div class="step-num violet">9</div>
+        <div class="step-title">Process edge (6–2, weight 0.40)</div>
+      </div>
+      <div class="step-body">find(6) = 6, find(2) = 0 → different<br>
+      <span class="accepted">✓ Accept</span> — Now all 8 vertices connected. <strong>MST complete!</strong> Total weight = 0.16+0.17+0.19+0.26+0.28+0.35+0.40 = <em>1.81</em></div>
+    </div>
+  </div>
+
+  <h3>Time Complexity</h3>
+  <p>Kruskal's has two phases: sorting and Union-Find operations.</p>
+  <div class="complexity-bar-wrap">
+    <div class="cbar-row">
+      <div class="cbar-label">Sorting edges</div>
+      <div class="cbar-track"><div class="cbar-fill medium">O(E log E)</div></div>
+    </div>
+    <div class="cbar-row">
+      <div class="cbar-label">Union-Find ops</div>
+      <div class="cbar-track"><div class="cbar-fill fast">O(E · α(V)) ≈ O(E)</div></div>
+    </div>
+    <div class="cbar-row">
+      <div class="cbar-label">Total</div>
+      <div class="cbar-track"><div class="cbar-fill medium">O(E log E)</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════ PART IV: PRIM -->
+<section id="prim">
+  <div class="section-label">Part IV</div>
+  <h2>Prim's <span>Algorithm</span></h2>
+
+  <div class="algo-card">
+    <div class="algo-card-header">
+      <div class="algo-icon" style="background:rgba(45,212,191,0.15);">🌱</div>
+      <div>
+        <div style="font-family:Syne,sans-serif;font-size:1.1rem;font-weight:800;color:#e8edf5;">Prim's Algorithm (Eager Version)</div>
+        <div style="font-size:.88rem;color:var(--text-dim);">Grow the MST one vertex at a time from a starting vertex</div>
+      </div>
+    </div>
+    <div class="algo-card-body">
+      <div class="stats-row">
+        <div class="stat-pill"><span>Time</span><strong style="color:var(--gold);">O(E log V)</strong></div>
+        <div class="stat-pill"><span>Space</span><strong style="color:var(--teal);">O(V)</strong></div>
+        <div class="stat-pill"><span>Data Structure</span><strong style="color:var(--violet);">Indexed Min-PQ</strong></div>
+        <div class="stat-pill"><span>Best For</span><strong style="color:var(--green);">Dense Graphs</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <h3>The Core Idea</h3>
+  <p>While Kruskal's algorithm thinks about edges globally, Prim's algorithm <strong>grows a tree outward from a single starting vertex</strong>. At every step, it picks the cheapest edge that connects a vertex already in the tree to a vertex not yet in the tree.</p>
+
+  <div class="analogy">
+    <div class="analogy-label">Analogy — Spreading a Campfire</div>
+    <p>Imagine you light a campfire at one vertex. At each moment, the fire can spread to a neighboring vertex. Of all possible directions the fire could spread, it always chooses the cheapest edge. This "fire" grows until it has reached every vertex.</p>
+  </div>
+
+  <h3>Lazy vs. Eager: What's the Difference?</h3>
+  <p>There are two versions of Prim's:</p>
+  <ul style="margin:0 0 16px 24px; color:#b8c2d4;">
+    <li style="margin-bottom:10px;"><strong>Lazy Prim's</strong> — Stores <em>all</em> crossing edges in a priority queue, including stale ones. When extracting, it checks if the edge still crosses the cut. Simple but uses O(E) space for the queue.</li>
+    <li style="margin-bottom:10px;"><strong>Eager Prim's</strong> — For each non-tree vertex, stores only the <em>best</em> (cheapest) known edge connecting it to the tree. Uses O(V) space. Needs a special <em>indexed</em> priority queue that supports <code>decreaseKey</code>.</li>
+  </ul>
+
+  <h3>Eager Prim's Algorithm</h3>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C++</span><span class="code-title">Eager Prim's — Indexed Min-Priority Queue</span></div>
+    <pre><span class="cm">// ─── PRIM'S ALGORITHM (EAGER VERSION) ─────────────────────────────────────
+// Plain English:
+//   ① Start with vertex 0 in the tree; distTo[0]=0, all others = ∞
+//   ② Use an IndexedMinPQ keyed by "cheapest edge weight to tree"
+//   ③ Each round: extract vertex v with cheapest connection to tree
+//   ④ Mark v as in-tree; add edgeTo[v] to MST
+//   ⑤ Scan v's neighbors: if cheaper edge found, UPDATE distTo[w] and
+//      decreaseKey(w) in the PQ (this is the "eager" part — we always
+//      keep only the BEST known edge per non-tree vertex, not all candidates)
+//
+// distTo[w] = cheapest single edge weight connecting w to the tree SO FAR
+// edgeTo[w] = the actual edge achieving that cheapest connection
+// ─────────────────────────────────────────────────────────────────────────</span>
+<span class="kw">vector</span><span class="op">&lt;</span><span class="tp">Edge</span><span class="op">&gt;</span> <span class="fn">primMST</span>(<span class="tp">WeightedGraph</span><span class="op">&amp;</span> G) {
+    vector<span class="op">&lt;</span><span class="tp">bool</span><span class="op">&gt;</span>   marked(G.V, <span class="kw">false</span>);    <span class="cm">// is vertex in MST?</span>
+    vector<span class="op">&lt;</span><span class="tp">double</span><span class="op">&gt;</span> distTo(G.V, INF);     <span class="cm">// cheapest edge weight to tree</span>
+    vector<span class="op">&lt;</span><span class="tp">Edge</span><span class="op">&gt;</span>   edgeTo(G.V);          <span class="cm">// cheapest edge itself</span>
+    vector<span class="op">&lt;</span><span class="tp">Edge</span><span class="op">&gt;</span>   mst;
+    <span class="tp">IndexedMinPQ</span>   ipq(G.V);
+
+    distTo[<span class="nm">0</span>] <span class="op">=</span> <span class="nm">0.0</span>;
+    ipq.<span class="fn">insert</span>(<span class="nm">0</span>, <span class="nm">0.0</span>);              <span class="cm">// start from vertex 0</span>
+
+    <span class="kw">while</span> (<span class="op">!</span>ipq.<span class="fn">empty</span>()) {
+        <span class="tp">int</span> v <span class="op">=</span> ipq.<span class="fn">extractMin</span>();     <span class="cm">// vertex closest to tree</span>
+        marked[v] <span class="op">=</span> <span class="kw">true</span>;
+        <span class="kw">if</span> (v <span class="op">!=</span> <span class="nm">0</span>) mst.<span class="fn">push_back</span>(edgeTo[v]);  <span class="cm">// add its edge to MST</span>
+
+        <span class="kw">for</span> (<span class="tp">Edge</span><span class="op">&amp;</span> e : G.adj[v]) {
+            <span class="tp">int</span> w <span class="op">=</span> e.<span class="fn">other</span>(v);
+            <span class="kw">if</span> (marked[w]) <span class="kw">continue</span>;          <span class="cm">// already in MST — skip</span>
+
+            <span class="kw">if</span> (e.weight <span class="op">&lt;</span> distTo[w]) {
+                distTo[w] <span class="op">=</span> e.weight;           <span class="cm">// found cheaper edge to w</span>
+                edgeTo[w] <span class="op">=</span> e;                  <span class="cm">// update best edge to w</span>
+                <span class="kw">if</span> (ipq.<span class="fn">contains</span>(w)) ipq.<span class="fn">decreaseKey</span>(w, e.weight);  <span class="cm">// update PQ</span>
+                <span class="kw">else</span>                  ipq.<span class="fn">insert</span>(w, e.weight);        <span class="cm">// first time seeing w</span>
+            }
+        }
+    }
+    <span class="kw">return</span> mst;
+}</pre>
+  </div>
+
+  <h3>The Indexed Priority Queue</h3>
+  <p>Prim's eager version needs a special data structure: an <strong>indexed min-priority queue</strong>. This is like a normal priority queue but with a twist — you can update (decrease) the priority of an existing element efficiently.</p>
+
+  <div class="definition">
+    <div class="definition-label">Indexed Min-Priority Queue — Key Operations</div>
+    <p><strong>insert(vertex, priority)</strong> — add a vertex with a given priority<br>
+    <strong>extractMin()</strong> — remove and return the vertex with lowest priority<br>
+    <strong>decreaseKey(vertex, newPriority)</strong> — update a vertex's priority (when we find a better edge)<br>
+    <strong>contains(vertex)</strong> — check if vertex is in the queue<br><br>
+    All operations: <em>O(log V)</em>. Implemented as a binary heap with a position-lookup array.</p>
+  </div>
+
+  <h3>Prim's Trace (Eager, same 8-vertex graph)</h3>
+
+  <div class="trace-container">
+    <div class="trace-title">Starting from vertex 0</div>
+
+    <div class="trace-step">
+      <div class="trace-step-header"><div class="step-num">1</div><div class="step-title">Extract vertex 0 (dist=0.0) — Start</div></div>
+      <div class="step-body">No edge added (first vertex). Scan neighbors: 7(0.16), 2(0.26), 4(0.38), 6(0.58)<br>Insert all into IPQ → <code>{7:0.16, 2:0.26, 4:0.38, 6:0.58}</code></div>
+    </div>
+
+    <div class="trace-step">
+      <div class="trace-step-header"><div class="step-num teal">2</div><div class="step-title">Extract vertex 7 (dist=0.16) — Best neighbor</div></div>
+      <div class="step-body"><span class="accepted">✓ Add edge (0–7, 0.16) to MST.</span> Scan 7's neighbors:<br>
+      Vertex 1: new! dist[1]=0.19. Vertex 5: new! dist[5]=0.28.<br>
+      Vertex 4: 0.37 &lt; 0.38 → <code>decreaseKey(4, 0.37)</code><br>
+      IPQ: <code>{1:0.19, 2:0.26, 5:0.28, 4:0.37, 6:0.58}</code></div>
+    </div>
+
+    <div class="trace-step">
+      <div class="trace-step-header"><div class="step-num violet">3</div><div class="step-title">Extract vertex 1 (dist=0.19)</div></div>
+      <div class="step-body"><span class="accepted">✓ Add edge (1–7, 0.19) to MST.</span> Scan 1's neighbors:<br>
+      Vertex 3: dist[3]=0.29. Vertex 5: 0.32 &gt; 0.28, no update.</div>
+    </div>
+
+    <div class="trace-step">
+      <div class="trace-step-header"><div class="step-num green">4</div><div class="step-title">Extract vertex 2 (dist=0.26)</div></div>
+      <div class="step-body"><span class="accepted">✓ Add edge (0–2, 0.26) to MST.</span> Scan neighbors:<br>
+      Vertex 3: 0.17 &lt; 0.29 → <code>decreaseKey(3, 0.17)</code><br>
+      Vertex 6: 0.40 &lt; 0.58 → <code>decreaseKey(6, 0.40)</code></div>
+    </div>
+
+    <div class="trace-step">
+      <div class="trace-step-header"><div class="step-num">5</div><div class="step-title">Extract vertex 3 (dist=0.17)</div></div>
+      <div class="step-body"><span class="accepted">✓ Add edge (2–3, 0.17) to MST.</span> No better edges found from 3.</div>
+    </div>
+
+    <div class="trace-step">
+      <div class="trace-step-header"><div class="step-num teal">6</div><div class="step-title">Extract vertex 5 (dist=0.28)</div></div>
+      <div class="step-body"><span class="accepted">✓ Add edge (5–7, 0.28) to MST.</span><br>
+      Vertex 4: 0.35 &lt; 0.37 → <code>decreaseKey(4, 0.35)</code></div>
+    </div>
+
+    <div class="trace-step">
+      <div class="trace-step-header"><div class="step-num rose">7</div><div class="step-title">Extract vertex 4 (dist=0.35)</div></div>
+      <div class="step-body"><span class="accepted">✓ Add edge (4–5, 0.35) to MST.</span> No improvements from 4.</div>
+    </div>
+
+    <div class="trace-step">
+      <div class="trace-step-header"><div class="step-num violet">8</div><div class="step-title">Extract vertex 6 (dist=0.40)</div></div>
+      <div class="step-body"><span class="accepted">✓ Add edge (6–2, 0.40) to MST. Done!</span><br>
+      Final MST weight = 1.81 — <em>identical to Kruskal's result</em></div>
+    </div>
+  </div>
+
+  <div class="callout info"><div class="ci"></div><p>Kruskal's and Prim's always find the same MST (when weights are distinct), but in a different order. Kruskal's picked edges globally by weight; Prim's picked them locally by growing outward from vertex 0.</p></div>
+</section>
+
+<!-- ══════════════════════════════════════════ PART V: DIJKSTRA -->
+<section id="dijkstra">
+  <div class="section-label">Part V</div>
+  <h2>Dijkstra's <span>Algorithm</span></h2>
+
+  <div class="algo-card">
+    <div class="algo-card-header">
+      <div class="algo-icon" style="background:rgba(96,165,250,0.15);">🗺️</div>
+      <div>
+        <div style="font-family:Syne,sans-serif;font-size:1.1rem;font-weight:800;color:#e8edf5;">Dijkstra's Algorithm (1959)</div>
+        <div style="font-size:.88rem;color:var(--text-dim);">Single-source shortest paths for graphs with non-negative weights</div>
+      </div>
+    </div>
+    <div class="algo-card-body">
+      <div class="stats-row">
+        <div class="stat-pill"><span>Time</span><strong style="color:var(--gold);">O(E log V)</strong></div>
+        <div class="stat-pill"><span>Space</span><strong style="color:var(--teal);">O(V)</strong></div>
+        <div class="stat-pill"><span>Requirement</span><strong style="color:var(--rose);">Weights ≥ 0</strong></div>
+        <div class="stat-pill"><span>Use Case</span><strong style="color:var(--green);">GPS, Routing</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <h3>What Problem Does It Solve?</h3>
+  <p>Given a directed weighted graph and a <strong>source vertex s</strong>, find the <em>shortest path</em> (minimum total weight) from s to <em>every other vertex</em>. "Shortest" means minimum total edge weight, not fewest edges.</p>
+
+  <div class="analogy">
+    <div class="analogy-label">Analogy — Ripples in a Pond</div>
+    <p>Drop a stone at the source vertex. Ripples spread outward through the graph. The first ripple to reach a vertex gives the shortest distance. Dijkstra's algorithm processes vertices exactly in the order the ripples would reach them — nearest first.</p>
+  </div>
+
+  <h3>The Relaxation Operation</h3>
+  <p>The core operation in all shortest-path algorithms is called <strong>relaxation</strong>. Given an edge from v to w, we ask: "Can I reach w more cheaply by going through v?"</p>
+
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C++</span><span class="code-title">Edge Relaxation — the fundamental operation</span></div>
+    <pre><span class="cm">// ─── EDGE RELAXATION ──────────────────────────────────────────────────────
+// The single core operation in ALL shortest-path algorithms.
+//
+// Question: "Can I reach w more cheaply by going THROUGH v?"
+//
+// Concrete example:
+//   distTo[v]=5, edge v→w has weight=3, distTo[w]=∞
+//   newDist = 5+3 = 8 < ∞  → RELAX! distTo[w] = 8, edgeTo[w] = this edge
+//
+//   Later: distTo[v]=5, edge v→w has weight=3, distTo[w]=7 (already updated)
+//   newDist = 5+3 = 8 > 7  → no improvement, keep distTo[w]=7
+// ─────────────────────────────────────────────────────────────────────────
+// distTo[v] = currently known shortest distance from source to v
+// edgeTo[v] = last edge on the shortest known path to v</span>
+
+<span class="kw">void</span> <span class="fn">relax</span>(<span class="tp">DirectedEdge</span> e) {
+    <span class="tp">int</span>    v <span class="op">=</span> e.<span class="fn">from</span>(), w <span class="op">=</span> e.<span class="fn">to</span>();
+    <span class="tp">double</span> newDist <span class="op">=</span> distTo[v] <span class="op">+</span> e.weight;
+
+    <span class="kw">if</span> (newDist <span class="op">&lt;</span> distTo[w]) {        <span class="cm">// found a shorter path to w!</span>
+        distTo[w] <span class="op">=</span> newDist;           <span class="cm">// update best known distance</span>
+        edgeTo[w] <span class="op">=</span> e;                 <span class="cm">// remember which edge led here</span>
+    }
+}</pre>
+  </div>
+
+  <h3>Dijkstra's Algorithm</h3>
+  <p>Dijkstra's algorithm is structurally very similar to eager Prim's. The key difference: <strong>Prim's tracks cheapest edge weight, Dijkstra's tracks total path distance from source</strong>.</p>
+
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C++</span><span class="code-title">Dijkstra's Algorithm — Single-Source Shortest Paths</span></div>
+    <pre><span class="cm">// ─── DIJKSTRA'S ALGORITHM ─────────────────────────────────────────────────
+// Plain English:
+//   ① Initialize: distTo[source]=0, all others = ∞
+//   ② Insert source into IndexedMinPQ with priority 0
+//   ③ Repeat until PQ is empty:
+//        a) Extract vertex v with SMALLEST distTo  ("settle" it)
+//        b) Mark v as settled — its distance is now FINAL
+//        c) For each edge v→w: relax (if distTo[v]+weight < distTo[w],
+//           update distTo[w] and decreaseKey(w) in PQ)
+//
+// KEY INVARIANT: Once a vertex is settled, distTo[v] is the true
+//               shortest distance. This relies on weights ≥ 0!
+//
+// Contrast with Prim's:  priority = cheapest EDGE weight to v
+// Here (Dijkstra's):     priority = total PATH distance from source to v
+//
+// distTo state progression (8-vertex graph, source=0):
+//   After settle 0: [0, 5, ∞, ∞, 9, ∞, ∞, 8]
+//   After settle 1: [0, 5, 17, 20, 9, ∞, ∞, 8]
+//   After settle 7: [0, 5, 15, 20, 9, 14, ∞, 8]
+// ─────────────────────────────────────────────────────────────────────────</span>
+<span class="kw">void</span> <span class="fn">dijkstra</span>(<span class="tp">WeightedDigraph</span><span class="op">&amp;</span> G, <span class="tp">int</span> s) {
+    vector<span class="op">&lt;</span><span class="tp">double</span><span class="op">&gt;</span>       distTo(G.V, INF);      <span class="cm">// shortest known dist from s</span>
+    vector<span class="op">&lt;</span><span class="tp">DirectedEdge</span><span class="op">&gt;</span> edgeTo(G.V);           <span class="cm">// last edge on shortest path</span>
+    vector<span class="op">&lt;</span><span class="tp">bool</span><span class="op">&gt;</span>         settled(G.V, <span class="kw">false</span>);   <span class="cm">// finalized vertices</span>
+    <span class="tp">IndexedMinPQ</span>          ipq(G.V);
+
+    distTo[s] <span class="op">=</span> <span class="nm">0.0</span>;
+    ipq.<span class="fn">insert</span>(s, <span class="nm">0.0</span>);
+
+    <span class="kw">while</span> (<span class="op">!</span>ipq.<span class="fn">empty</span>()) {
+        <span class="tp">int</span> v <span class="op">=</span> ipq.<span class="fn">extractMin</span>();    <span class="cm">// settle the nearest unsettled vertex</span>
+        settled[v] <span class="op">=</span> <span class="kw">true</span>;
+
+        <span class="kw">for</span> (<span class="tp">DirectedEdge</span><span class="op">&amp;</span> e : G.adj[v]) {
+            <span class="tp">int</span>    w      <span class="op">=</span> e.<span class="fn">to</span>();
+            <span class="tp">double</span> newDist <span class="op">=</span> distTo[v] <span class="op">+</span> e.weight;
+
+            <span class="kw">if</span> (settled[w]) <span class="kw">continue</span>;  <span class="cm">// already finalized — skip</span>
+
+            <span class="kw">if</span> (newDist <span class="op">&lt;</span> distTo[w]) {   <span class="cm">// relaxation — found shorter path!</span>
+                distTo[w] <span class="op">=</span> newDist;
+                edgeTo[w] <span class="op">=</span> e;
+                <span class="kw">if</span> (ipq.<span class="fn">contains</span>(w)) ipq.<span class="fn">decreaseKey</span>(w, newDist);
+                <span class="kw">else</span>                  ipq.<span class="fn">insert</span>(w, newDist);
+            }
+        }
+    }
+}
+
+<span class="cm">// Reconstruct actual path to target t by following edgeTo[] backward:
+//   e.g., to reconstruct path to vertex 3 after 8-vertex trace:
+//   edgeTo[3] = 2→3, edgeTo[2] = 5→2, edgeTo[5] = 4→5, edgeTo[4] = 0→4
+//   Walk backward: 3←2←5←4←0 → push onto stack → pop for 0→4→5→2→3</span>
+<span class="kw">vector</span><span class="op">&lt;</span><span class="tp">DirectedEdge</span><span class="op">&gt;</span> <span class="fn">pathTo</span>(<span class="tp">int</span> t) {
+    stack<span class="op">&lt;</span><span class="tp">DirectedEdge</span><span class="op">&gt;</span> path;
+    <span class="kw">for</span> (<span class="tp">DirectedEdge</span> e <span class="op">=</span> edgeTo[t]; e <span class="op">!=</span> <span class="kw">null</span>; e <span class="op">=</span> edgeTo[e.<span class="fn">from</span>()])
+        path.<span class="fn">push</span>(e);        <span class="cm">// push edges from t backward to source</span>
+    <span class="cm">// pop the stack to get edges in forward order: source → ... → t</span>
+    <span class="kw">return</span> {path.<span class="fn">rbegin</span>(), path.<span class="fn">rend</span>()};
+}</pre>
+  </div>
+
+  <h3>Full Trace: Dijkstra's on 8 Vertices</h3>
+  <p>Directed graph, source = vertex 0. Track how <code>distTo[]</code> evolves:</p>
+
+  <div class="trace-container">
+    <div class="trace-title">Extracting vertices nearest-first</div>
+
+    <div class="trace-step">
+      <div class="trace-step-header"><div class="step-num">1</div><div class="step-title">Extract vertex 0 (dist=0.0) — Source</div></div>
+      <div class="step-body">
+        Relax 0→1: <code>distTo[1] = 5.0</code><br>
+        Relax 0→4: <code>distTo[4] = 9.0</code><br>
+        Relax 0→7: <code>distTo[7] = 8.0</code><br>
+        IPQ: <code>{1:5.0, 7:8.0, 4:9.0}</code>
+      </div>
+    </div>
+
+    <div class="trace-step">
+      <div class="trace-step-header"><div class="step-num teal">2</div><div class="step-title">Extract vertex 1 (dist=5.0)</div></div>
+      <div class="step-body">
+        Relax 1→2: <code>distTo[2] = 17.0</code><br>
+        Relax 1→3: <code>distTo[3] = 20.0</code><br>
+        Relax 1→7: 5+4=9 &gt; 8 — no update<br>
+        distTo: <code>[0, 5, 17, 20, 9, ∞, ∞, 8]</code>
+      </div>
+    </div>
+
+    <div class="trace-step">
+      <div class="trace-step-header"><div class="step-num violet">3</div><div class="step-title">Extract vertex 7 (dist=8.0)</div></div>
+      <div class="step-body">
+        Relax 7→5: <code>distTo[5] = 14.0</code><br>
+        Relax 7→2: 8+7=15 &lt; 17 → <code>decreaseKey(2, 15.0)</code><br>
+        distTo: <code>[0, 5, 15, 20, 9, 14, ∞, 8]</code>
+      </div>
+    </div>
+
+    <div class="trace-step">
+      <div class="trace-step-header"><div class="step-num green">4</div><div class="step-title">Extract vertex 4 (dist=9.0)</div></div>
+      <div class="step-body">
+        Relax 4→5: 9+4=13 &lt; 14 → <code>decreaseKey(5, 13.0)</code><br>
+        Relax 4→6: <code>distTo[6] = 29.0</code><br>
+        distTo: <code>[0, 5, 15, 20, 9, 13, 29, 8]</code>
+      </div>
+    </div>
+
+    <div class="trace-step">
+      <div class="trace-step-header"><div class="step-num">5</div><div class="step-title">Extract vertex 5 (dist=13.0)</div></div>
+      <div class="step-body">
+        Relax 5→2: 13+1=14 &lt; 15 → <code>decreaseKey(2, 14.0)</code><br>
+        Relax 5→6: 13+13=26 &lt; 29 → <code>decreaseKey(6, 26.0)</code><br>
+        distTo: <code>[0, 5, 14, 20, 9, 13, 26, 8]</code>
+      </div>
+    </div>
+
+    <div class="trace-step">
+      <div class="trace-step-header"><div class="step-num teal">6</div><div class="step-title">Extract vertex 2 (dist=14.0)</div></div>
+      <div class="step-body">
+        Relax 2→3: 14+3=17 &lt; 20 → <code>decreaseKey(3, 17.0)</code><br>
+        Relax 2→6: 14+11=25 &lt; 26 → <code>decreaseKey(6, 25.0)</code><br>
+        distTo: <code>[0, 5, 14, 17, 9, 13, 25, 8]</code>
+      </div>
+    </div>
+
+    <div class="trace-step">
+      <div class="trace-step-header"><div class="step-num rose">7</div><div class="step-title">Extract vertex 3 (dist=17.0)</div></div>
+      <div class="step-body">
+        Relax 3→6: 17+9=26 &gt; 25 — no update
+      </div>
+    </div>
+
+    <div class="trace-step">
+      <div class="trace-step-header"><div class="step-num violet">8</div><div class="step-title">Extract vertex 6 (dist=25.0) — Done!</div></div>
+      <div class="step-body">
+        No outgoing edges. Final distances: <code>[0.0, 5.0, 14.0, 17.0, 9.0, 13.0, 25.0, 8.0]</code>
+      </div>
+    </div>
+  </div>
+
+  <h4>Shortest-Path Tree (edgeTo reconstruction)</h4>
+  <div class="compare-table-wrap">
+    <table>
+      <tr><th>Target Vertex</th><th>Last Edge</th><th>Full Path from 0</th><th>Distance</th></tr>
+      <tr><td>1</td><td><code>0→1</code></td><td>0 → 1</td><td><span class="tag tag-gold">5.0</span></td></tr>
+      <tr><td>2</td><td><code>5→2</code></td><td>0 → 4 → 5 → 2</td><td><span class="tag tag-teal">14.0</span></td></tr>
+      <tr><td>3</td><td><code>2→3</code></td><td>0 → 4 → 5 → 2 → 3</td><td><span class="tag tag-violet">17.0</span></td></tr>
+      <tr><td>4</td><td><code>0→4</code></td><td>0 → 4</td><td><span class="tag tag-gold">9.0</span></td></tr>
+      <tr><td>5</td><td><code>4→5</code></td><td>0 → 4 → 5</td><td><span class="tag tag-teal">13.0</span></td></tr>
+      <tr><td>6</td><td><code>2→6</code></td><td>0 → 4 → 5 → 2 → 6</td><td><span class="tag tag-violet">25.0</span></td></tr>
+      <tr><td>7</td><td><code>0→7</code></td><td>0 → 7</td><td><span class="tag tag-gold">8.0</span></td></tr>
+    </table>
+  </div>
+
+  <h3>Why Correctness Requires Non-Negative Weights</h3>
+  <p>Dijkstra's correctness proof relies on one key assumption: <strong>once a vertex is settled (extracted from the priority queue), its distance is final.</strong> This is guaranteed only if all future edges have non-negative weight.</p>
+
+  <div class="callout warn"><div class="ci"></div>
+    <p><strong>Negative edge example:</strong> Vertices S, A, B. Edges: S→A (1), S→B (5), A→B (−10).<br>
+    Dijkstra settles B with distance 5 before discovering the shorter path S→A→B = 1+(−10) = −9. With negative edges, "nearest vertex" is no longer safe to finalize — a future negative edge could always create a shorter path.</p>
+  </div>
+
+  <div class="callout info"><div class="ci"></div>
+    <p><strong>🏗️ Prim's vs Dijkstra's — One Variable Apart</strong><br>
+    These two algorithms share the exact same skeleton. The only difference is what value they store as the priority in the indexed min-PQ:<br><br>
+    <code>Prim's:     priority = e.weight</code>  ← cheapest SINGLE edge to tree<br>
+    <code>Dijkstra's: priority = distTo[v] + e.weight</code>  ← total PATH cost from source<br><br>
+    Prim's cares about the cheapest edge per step (builds MST).
+    Dijkstra's cares about cheapest total path (builds shortest-path tree).
+    Same data structure, same loop, one changed line.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════ PART VI: BELLMAN-FORD -->
+<section id="bellman">
+  <div class="section-label">Part VI</div>
+  <h2>Bellman-<span>Ford</span> Algorithm</h2>
+
+  <div class="algo-card">
+    <div class="algo-card-header">
+      <div class="algo-icon" style="background:rgba(251,113,133,0.15);">⚡</div>
+      <div>
+        <div style="font-family:Syne,sans-serif;font-size:1.1rem;font-weight:800;color:#e8edf5;">Bellman-Ford Algorithm (1958)</div>
+        <div style="font-size:.88rem;color:var(--text-dim);">Shortest paths with negative weights + negative cycle detection</div>
+      </div>
+    </div>
+    <div class="algo-card-body">
+      <div class="stats-row">
+        <div class="stat-pill"><span>Time</span><strong style="color:var(--rose);">O(VE)</strong></div>
+        <div class="stat-pill"><span>Space</span><strong style="color:var(--teal);">O(V)</strong></div>
+        <div class="stat-pill"><span>Handles</span><strong style="color:var(--green);">Negative Weights</strong></div>
+        <div class="stat-pill"><span>Detects</span><strong style="color:var(--violet);">Negative Cycles</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <h3>The Core Idea</h3>
+  <p>Bellman-Ford is beautifully simple, if less elegant than Dijkstra's: <strong>relax every single edge, and repeat this V−1 times</strong>. After V−1 rounds, all shortest paths are guaranteed to be correct — as long as there are no negative cycles.</p>
+
+  <div class="analogy">
+    <div class="analogy-label">Analogy — Rumor Spreading</div>
+    <p>Imagine shortest-path information as a rumor. In each "round," every person passes their best-known distance info to their neighbors. After V−1 rounds, the information has had time to travel along any path of length up to V−1, covering all possible shortest paths.</p>
+  </div>
+
+  <h3>Why V−1 Passes?</h3>
+  <p>A shortest path in a graph with V vertices visits at most V vertices — meaning at most <strong>V−1 edges</strong>. In pass 1, we correctly settle all 1-edge paths. In pass 2, all 2-edge paths. After V−1 passes, all paths are correct.</p>
+
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C++</span><span class="code-title">Bellman-Ford with Negative Cycle Detection</span></div>
+    <pre><span class="cm">// ─── BELLMAN-FORD ALGORITHM ────────────────────────────────────────────────
+// Plain English:
+//   ① Initialize: distTo[source]=0, all others = ∞
+//   ② Repeat V-1 times:
+//        Relax EVERY edge in the graph
+//        If any distTo improved, set anyChange=true
+//        If NO edge improved (anyChange=false), we've converged early — stop
+//   ③ Do ONE more pass (the Vth pass):
+//        If any edge STILL relaxes → a negative cycle exists → return false
+//        Otherwise → distTo[] is correct → return true
+//
+// WHY V-1 passes?
+//   Any shortest path visits at most V vertices → at most V-1 edges.
+//   Pass k correctly solves all paths using ≤ k edges.
+//   After V-1 passes, all possible path lengths are covered.
+//
+// State evolution (5-vertex graph, source=0):
+//   Initial: [0, ∞, ∞, ∞, ∞]
+//   Pass 1:  [0, 6, 4, 7, 2]   ← 1-edge paths found + negative shortcuts
+//   Pass 2:  [0, 2, 4, 7, 2]   ← 2→1 negative edge improves dist[1]
+//   Pass 3:  [0, 2, 4, 7, -2]  ← 1→4 negative improves dist[4]
+//   Pass 4:  [0, 2, 4, 7, -2]  ← no changes → converged!
+// ─────────────────────────────────────────────────────────────────────────</span>
+<span class="kw">bool</span> <span class="fn">bellmanFord</span>(<span class="tp">WeightedDigraph</span><span class="op">&amp;</span> G, <span class="tp">int</span> s,
+                  vector<span class="op">&lt;</span><span class="tp">double</span><span class="op">&gt;&amp;</span> distTo, vector<span class="op">&lt;</span><span class="tp">DirectedEdge</span><span class="op">&gt;&amp;</span> edgeTo) {
+    distTo.<span class="fn">assign</span>(G.V, INF);
+    distTo[s] <span class="op">=</span> <span class="nm">0.0</span>;
+
+    <span class="cm">// MAIN LOOP: V-1 passes, each relaxes ALL edges</span>
+    <span class="kw">for</span> (<span class="tp">int</span> pass <span class="op">=</span> <span class="nm">1</span>; pass <span class="op">&lt;=</span> G.V <span class="op">-</span> <span class="nm">1</span>; pass<span class="op">++</span>) {
+        <span class="tp">bool</span> anyChange <span class="op">=</span> <span class="kw">false</span>;
+        <span class="kw">for</span> (<span class="tp">DirectedEdge</span><span class="op">&amp;</span> e : G.<span class="fn">allEdges</span>()) {
+            <span class="tp">int</span> v <span class="op">=</span> e.<span class="fn">from</span>(), w <span class="op">=</span> e.<span class="fn">to</span>();
+            <span class="kw">if</span> (distTo[v] <span class="op">+</span> e.weight <span class="op">&lt;</span> distTo[w]) {
+                distTo[w] <span class="op">=</span> distTo[v] <span class="op">+</span> e.weight;
+                edgeTo[w] <span class="op">=</span> e;
+                anyChange <span class="op">=</span> <span class="kw">true</span>;
+            }
+        }
+        <span class="kw">if</span> (<span class="op">!</span>anyChange) <span class="kw">break</span>;    <span class="cm">// early termination: already converged</span>
+    }
+
+    <span class="cm">// NEGATIVE CYCLE CHECK (the Vth pass):
+    // If distances had truly converged, no edge should relax on this extra pass.
+    // If ANY edge still relaxes → we're stuck in a negative cycle (infinite improvement)!</span>
+    <span class="kw">for</span> (<span class="tp">DirectedEdge</span><span class="op">&amp;</span> e : G.<span class="fn">allEdges</span>()) {
+        <span class="kw">if</span> (distTo[e.<span class="fn">from</span>()] <span class="op">+</span> e.weight <span class="op">&lt;</span> distTo[e.<span class="fn">to</span>()]) {
+            <span class="kw">return false</span>;  <span class="cm">// negative cycle detected!</span>
+        }
+    }
+    <span class="kw">return true</span>;  <span class="cm">// no negative cycle — distTo[] holds correct shortest distances</span>
+}</pre>
+  </div>
+
+  <h3>What Is a Negative Cycle?</h3>
+  <div class="definition">
+    <div class="definition-label">Definition — Negative Cycle</div>
+    <p>A <strong>negative cycle</strong> is a directed cycle whose total edge weight is <em>negative</em>. If one is reachable from the source, shortest paths become undefined — you could always go around the cycle one more time to make the distance smaller, with no bound.</p>
+  </div>
+
+  <h3>Trace: Bellman-Ford on 5 Vertices</h3>
+  <p>Directed graph with negative edges (but no negative cycle). Source = vertex 0:</p>
+
+  <div class="graph-card">
+    <div class="graph-card-title">Edge List (includes negative weights)</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">
+      <span class="tag tag-blue">0→1 (+6)</span>
+      <span class="tag tag-blue">0→3 (+7)</span>
+      <span class="tag tag-teal">1→2 (+5)</span>
+      <span class="tag tag-teal">1→4 (-4)</span>
+      <span class="tag tag-rose">2→1 (-2)</span>
+      <span class="tag tag-rose">3→2 (-3)</span>
+      <span class="tag tag-gold">3→4 (+9)</span>
+      <span class="tag tag-violet">4→0 (+2)</span>
+    </div>
+  </div>
+
+  <div class="trace-container">
+    <div class="trace-title">Pass-by-Pass Evolution of distTo[]</div>
+
+    <div class="trace-step">
+      <div class="trace-step-header"><div class="step-num">0</div><div class="step-title">Initial State</div></div>
+      <div class="step-body"><code>distTo = [0, ∞, ∞, ∞, ∞]</code></div>
+    </div>
+
+    <div class="trace-step">
+      <div class="trace-step-header"><div class="step-num teal">1</div><div class="step-title">Pass 1 — All 1-edge paths settled</div></div>
+      <div class="step-body">
+        0→1: dist[1]=6 &nbsp;|&nbsp; 0→3: dist[3]=7 &nbsp;|&nbsp; 1→2: dist[2]=11 &nbsp;|&nbsp; 1→4: dist[4]=2<br>
+        3→2: 7+(−3)=4 &lt; 11 → dist[2]=<strong>4</strong><br>
+        <code>After: [0, 6, 4, 7, 2]</code>
+      </div>
+    </div>
+
+    <div class="trace-step">
+      <div class="trace-step-header"><div class="step-num violet">2</div><div class="step-title">Pass 2 — 2-edge paths improve</div></div>
+      <div class="step-body">
+        2→1: 4+(−2)=2 &lt; 6 → dist[1]=<strong>2</strong><br>
+        <code>After: [0, 2, 4, 7, 2]</code>
+      </div>
+    </div>
+
+    <div class="trace-step">
+      <div class="trace-step-header"><div class="step-num green">3</div><div class="step-title">Pass 3 — 3-edge paths improve</div></div>
+      <div class="step-body">
+        1→4: 2+(−4)=−2 &lt; 2 → dist[4]=<strong>−2</strong><br>
+        <code>After: [0, 2, 4, 7, −2]</code>
+      </div>
+    </div>
+
+    <div class="trace-step">
+      <div class="trace-step-header"><div class="step-num rose">4</div><div class="step-title">Pass 4 (final) — No changes</div></div>
+      <div class="step-body">No edge improves. Converged!<br>
+        <code>Final: [0, 2, 4, 7, −2]</code></div>
+    </div>
+
+    <div class="trace-step">
+      <div class="trace-step-header"><div class="step-num" style="background:#546e7a;">✓</div><div class="step-title">Negative Cycle Check (Pass 5) — No relaxations → No negative cycle</div></div>
+      <div class="step-body">All distances are correct. Shortest paths: 0→1=2, 0→2=4, 0→3=7, 0→4=−2</div>
+    </div>
+  </div>
+
+  <h3>Real-World Application: Arbitrage Detection</h3>
+  <div class="key-insight">
+    <div class="icon">💱</div>
+    <p>In currency exchange, if you convert USD → EUR → JPY → USD and end up with <em>more</em> dollars than you started, that's an arbitrage opportunity. Model exchange rates as edge weights using logarithms: log(rate). Now detecting a "profit cycle" = detecting a negative cycle. Bellman-Ford finds it!</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════ PART VII: COMPARISON -->
+<section id="compare">
+  <div class="section-label">Part VII</div>
+  <h2>Algorithm <span>Comparison</span></h2>
+
+  <div class="callout info"><div class="ci"></div>
+    <p><strong>🌳 All Four Algorithms Share the Same DNA</strong><br>
+    Every algorithm in this lecture is a variation of one idea: maintain a set of "known-good" vertices/edges and greedily extend it using a priority queue or repeated relaxation.<br><br>
+    <strong>Same skeleton, different priority:</strong><br>
+    • Kruskal's: priority = edge weight; cycle check via Union-Find<br>
+    • Prim's: priority = cheapest single edge weight connecting v to tree<br>
+    • Dijkstra's: priority = total path cost from source to v<br>
+    • Bellman-Ford: NO priority — brute-force relax all edges V-1 times<br><br>
+    The last three all use <code>edgeTo[]</code> and can reconstruct paths by following parent links backward. Bellman-Ford's brute-force approach is the only one that catches negative cycles.</p>
+  </div>
+
+  <h3>The Big Four</h3>
+  <div class="compare-table-wrap">
+    <table>
+      <tr>
+        <th>Algorithm</th>
+        <th>Problem</th>
+        <th>Graph Type</th>
+        <th>Negative Weights?</th>
+        <th>Time</th>
+        <th>Core Data Structure</th>
+      </tr>
+      <tr>
+        <td><strong>Kruskal's</strong></td>
+        <td><span class="tag tag-teal">MST</span></td>
+        <td>Undirected</td>
+        <td><span class="tag tag-gold">N/A</span></td>
+        <td><code>O(E log E)</code></td>
+        <td>Union-Find</td>
+      </tr>
+      <tr>
+        <td><strong>Prim's (Eager)</strong></td>
+        <td><span class="tag tag-teal">MST</span></td>
+        <td>Undirected</td>
+        <td><span class="tag tag-gold">N/A</span></td>
+        <td><code>O(E log V)</code></td>
+        <td>Indexed Min-PQ</td>
+      </tr>
+      <tr>
+        <td><strong>Dijkstra's</strong></td>
+        <td><span class="tag tag-blue">SSSP</span></td>
+        <td>Directed</td>
+        <td><span class="tag tag-rose">No</span></td>
+        <td><code>O(E log V)</code></td>
+        <td>Indexed Min-PQ</td>
+      </tr>
+      <tr>
+        <td><strong>Bellman-Ford</strong></td>
+        <td><span class="tag tag-blue">SSSP</span></td>
+        <td>Directed</td>
+        <td><span class="tag tag-green">Yes + detects cycles</span></td>
+        <td><code>O(VE)</code></td>
+        <td>Arrays only</td>
+      </tr>
+    </table>
+  </div>
+
+  <h3>Speed Comparison (larger = slower)</h3>
+  <div class="complexity-bar-wrap">
+    <div class="cbar-row">
+      <div class="cbar-label">Dijkstra's</div>
+      <div class="cbar-track"><div class="cbar-fill fast">O(E log V)</div></div>
+    </div>
+    <div class="cbar-row">
+      <div class="cbar-label">Prim's (Eager)</div>
+      <div class="cbar-track"><div class="cbar-fill fast">O(E log V)</div></div>
+    </div>
+    <div class="cbar-row">
+      <div class="cbar-label">Kruskal's</div>
+      <div class="cbar-track"><div class="cbar-fill medium">O(E log E)</div></div>
+    </div>
+    <div class="cbar-row">
+      <div class="cbar-label">Bellman-Ford</div>
+      <div class="cbar-track"><div class="cbar-fill slow">O(VE)</div></div>
+    </div>
+  </div>
+
+  <h3>The Deep Structural Parallel: Prim's ≈ Dijkstra's</h3>
+  <p>Prim's and Dijkstra's look nearly identical in code. The only difference is what gets stored as the priority in the queue:</p>
+
+  <div class="compare-table-wrap">
+    <table>
+      <tr><th></th><th>Prim's Algorithm</th><th>Dijkstra's Algorithm</th></tr>
+      <tr>
+        <td><strong>Priority of vertex v</strong></td>
+        <td>Weight of the <em>cheapest edge</em> from tree to v</td>
+        <td><em>Total distance</em> from source to v</td>
+      </tr>
+      <tr>
+        <td><strong>Result</strong></td>
+        <td>Minimum Spanning Tree (minimum total edge weight)</td>
+        <td>Shortest Path Tree (minimum path distance from source)</td>
+      </tr>
+      <tr>
+        <td><strong>Goal</strong></td>
+        <td>Connect all vertices cheaply</td>
+        <td>Reach all vertices quickly from source</td>
+      </tr>
+    </table>
+  </div>
+
+  <h3>Decision Guide: Which Algorithm to Use?</h3>
+
+  <div class="trace-container">
+    <div class="trace-step">
+      <div class="trace-step-header"><div class="step-num" style="font-size:16px;">?</div><div class="step-title">Do you need to connect all vertices with minimum total cost?</div></div>
+      <div class="step-body">→ Use <strong>Kruskal's</strong> (sparse graphs, edge lists, or pre-sorted edges)<br>→ Use <strong>Prim's Eager</strong> (dense graphs, adjacency lists, starting from a specific vertex)</div>
+    </div>
+    <div class="trace-step">
+      <div class="trace-step-header"><div class="step-num teal" style="font-size:16px;">?</div><div class="step-title">Do you need shortest paths from one source, all weights ≥ 0?</div></div>
+      <div class="step-body">→ Use <strong>Dijkstra's Algorithm</strong>. Fastest practical option for this case.</div>
+    </div>
+    <div class="trace-step">
+      <div class="trace-step-header"><div class="step-num rose" style="font-size:16px;">?</div><div class="step-title">Do edges have negative weights, or do you need to detect negative cycles?</div></div>
+      <div class="step-body">→ Use <strong>Bellman-Ford</strong>. Slower (O(VE)) but handles any weight. Also detects negative cycles.</div>
+    </div>
+    <div class="trace-step">
+      <div class="trace-step-header"><div class="step-num violet" style="font-size:16px;">?</div><div class="step-title">Is the graph a DAG (Directed Acyclic Graph)?</div></div>
+      <div class="step-body">→ Use <strong>Topological sort + relaxation</strong> in O(V+E), regardless of negative weights!</div>
+    </div>
+    <div class="trace-step">
+      <div class="trace-step-header"><div class="step-num green" style="font-size:16px;">?</div><div class="step-title">Need shortest paths between ALL pairs of vertices?</div></div>
+      <div class="step-body">→ Run Dijkstra from every vertex: O(VE log V) for non-negative weights<br>→ Or use <strong>Floyd-Warshall</strong>: O(V³) for general weights</div>
+    </div>
+  </div>
+
+  <h3>Key Theorems Summary</h3>
+  <div class="compare-table-wrap">
+    <table>
+      <tr><th>Theorem</th><th>Statement</th></tr>
+      <tr><td><strong>Cut Property</strong></td><td>The minimum-weight edge crossing any cut belongs to every MST.</td></tr>
+      <tr><td><strong>Cycle Property</strong></td><td>The maximum-weight edge in any cycle belongs to no MST.</td></tr>
+      <tr><td><strong>MST Uniqueness</strong></td><td>When all edge weights are distinct, the MST is unique.</td></tr>
+      <tr><td><strong>Dijkstra Correctness</strong></td><td>Dijkstra's correctly solves SSSP iff all edge weights ≥ 0.</td></tr>
+      <tr><td><strong>Bellman-Ford Sufficiency</strong></td><td>V−1 passes suffice when no negative cycle is reachable from source.</td></tr>
+      <tr><td><strong>Negative Cycle Detection</strong></td><td>If the V-th pass of Bellman-Ford relaxes any edge, a negative cycle exists.</td></tr>
+      <tr><td><strong>Union-Find Performance</strong></td><td>With path compression + union by rank: O(α(N)) per operation ≈ O(1).</td></tr>
+    </table>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  Lecture 11 of 12 &nbsp;·&nbsp; Data Structures &amp; Algorithms &nbsp;·&nbsp; Based on Sedgewick &amp; Wayne, Algorithms 4th Ed.
+</footer>
+
+<script>
+  // Animate complexity bars on scroll
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.querySelectorAll('.cbar-fill').forEach(bar => {
+          bar.style.opacity = '1';
+        });
+      }
+    });
+  }, { threshold: 0.2 });
+
+  document.querySelectorAll('.complexity-bar-wrap').forEach(el => observer.observe(el));
+
+  // Fade in sections on scroll
+  const sectionObs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.style.opacity = '1';
+        e.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, { threshold: 0.05 });
+
+  document.querySelectorAll('section').forEach((el, i) => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(30px)';
+    el.style.transition = `opacity .6s ease ${i * 0.05}s, transform .6s ease ${i * 0.05}s`;
+    sectionObs.observe(el);
+  });
+</script>
+</body>
+</html>

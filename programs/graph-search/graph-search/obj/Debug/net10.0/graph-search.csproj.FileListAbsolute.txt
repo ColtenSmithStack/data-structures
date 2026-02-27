@@ -1,0 +1,15 @@
+/home/coltensmith/workspace/github/data-structures/programs/graph-search/graph-search/bin/Debug/net10.0/graph-search
+/home/coltensmith/workspace/github/data-structures/programs/graph-search/graph-search/bin/Debug/net10.0/graph-search.deps.json
+/home/coltensmith/workspace/github/data-structures/programs/graph-search/graph-search/bin/Debug/net10.0/graph-search.runtimeconfig.json
+/home/coltensmith/workspace/github/data-structures/programs/graph-search/graph-search/bin/Debug/net10.0/graph-search.dll
+/home/coltensmith/workspace/github/data-structures/programs/graph-search/graph-search/bin/Debug/net10.0/graph-search.pdb
+/home/coltensmith/workspace/github/data-structures/programs/graph-search/graph-search/obj/Debug/net10.0/graph-search.GeneratedMSBuildEditorConfig.editorconfig
+/home/coltensmith/workspace/github/data-structures/programs/graph-search/graph-search/obj/Debug/net10.0/graph-search.AssemblyInfoInputs.cache
+/home/coltensmith/workspace/github/data-structures/programs/graph-search/graph-search/obj/Debug/net10.0/graph-search.AssemblyInfo.cs
+/home/coltensmith/workspace/github/data-structures/programs/graph-search/graph-search/obj/Debug/net10.0/graph-search.csproj.CoreCompileInputs.cache
+/home/coltensmith/workspace/github/data-structures/programs/graph-search/graph-search/obj/Debug/net10.0/graph-search.sourcelink.json
+/home/coltensmith/workspace/github/data-structures/programs/graph-search/graph-search/obj/Debug/net10.0/graph-search.dll
+/home/coltensmith/workspace/github/data-structures/programs/graph-search/graph-search/obj/Debug/net10.0/refint/graph-search.dll
+/home/coltensmith/workspace/github/data-structures/programs/graph-search/graph-search/obj/Debug/net10.0/graph-search.pdb
+/home/coltensmith/workspace/github/data-structures/programs/graph-search/graph-search/obj/Debug/net10.0/graph-search.genruntimeconfig.cache
+/home/coltensmith/workspace/github/data-structures/programs/graph-search/graph-search/obj/Debug/net10.0/ref/graph-search.dll

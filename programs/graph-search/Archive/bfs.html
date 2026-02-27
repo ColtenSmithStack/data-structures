@@ -1,0 +1,2220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Breadth-First Search — Graph Algorithms Lecture 10</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@400;600;700&family=Nunito:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #0d1117;
+    --bg2:      #161b22;
+    --bg3:      #1c2330;
+    --surface:  #21262d;
+    --border:   #30363d;
+    --text:     #e6edf3;
+    --muted:    #8b949e;
+    --teal:     #39d0d8;
+    --teal-dim: #1a6b70;
+    --amber:    #f0a830;
+    --coral:    #ff6b6b;
+    --violet:   #a78bfa;
+    --green:    #3fb950;
+    --pink:     #f778ba;
+    --blue:     #58a6ff;
+    --code-bg:  #161b22;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Nunito', sans-serif;
+    font-size: 17px;
+    line-height: 1.8;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 1000; opacity: 0.35;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center; padding: 4rem 2rem;
+    position: relative; overflow: hidden;
+  }
+
+  .hero-bg {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 40%, #0a2a4a 0%, transparent 70%),
+      radial-gradient(ellipse 50% 40% at 20% 80%, #1a1a40 0%, transparent 60%),
+      radial-gradient(ellipse 40% 30% at 80% 20%, #0d3a2a 0%, transparent 55%),
+      var(--bg);
+  }
+
+  /* Animated ripple rings in hero */
+  .hero-rings {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: none;
+  }
+  .ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid rgba(57,208,216,0.08);
+    animation: expand 6s ease-out infinite;
+  }
+  .ring:nth-child(1){ width:200px;height:200px; animation-delay:0s; }
+  .ring:nth-child(2){ width:400px;height:400px; animation-delay:1.5s; }
+  .ring:nth-child(3){ width:600px;height:600px; animation-delay:3s; }
+  .ring:nth-child(4){ width:800px;height:800px; animation-delay:4.5s; }
+  @keyframes expand {
+    0%   { opacity:0; transform:scale(0.7); }
+    30%  { opacity:1; }
+    100% { opacity:0; transform:scale(1.1); }
+  }
+
+  .hero-content { position: relative; z-index: 1; max-width: 900px; }
+
+  .lecture-tag {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem; letter-spacing: 0.15em;
+    color: var(--teal); border: 1px solid var(--teal-dim);
+    padding: 0.35rem 1rem; border-radius: 2rem;
+    margin-bottom: 2rem;
+    animation: fadeSlideIn 0.8s ease both;
+  }
+
+  h1.hero-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(2.8rem, 7vw, 5.5rem);
+    line-height: 1.1; margin-bottom: 1.5rem;
+    animation: fadeSlideIn 0.8s 0.15s ease both;
+  }
+  .hero-title .accent  { color: var(--teal); }
+  .hero-title .accent2 { color: var(--amber); }
+
+  .hero-sub {
+    font-size: 1.15rem; color: var(--muted);
+    max-width: 620px; margin: 0 auto 1.5rem;
+    animation: fadeSlideIn 0.8s 0.3s ease both;
+  }
+
+  .hero-contrast {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem; color: var(--amber);
+    margin-bottom: 2.5rem; letter-spacing: 0.05em;
+    animation: fadeSlideIn 0.8s 0.45s ease both;
+  }
+
+  .hero-pills {
+    display: flex; flex-wrap: wrap; gap: 0.75rem;
+    justify-content: center;
+    animation: fadeSlideIn 0.8s 0.55s ease both;
+  }
+  .pill {
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 0.4rem 1.1rem; border-radius: 2rem;
+    font-size: 0.85rem; color: var(--muted);
+  }
+
+  @keyframes fadeSlideIn {
+    from { opacity:0; transform:translateY(24px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+
+  /* ── NAV ── */
+  .toc {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(13,17,23,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0.75rem 2rem;
+    display: flex; gap: 0.5rem;
+    overflow-x: auto; scrollbar-width: none;
+  }
+  .toc::-webkit-scrollbar { display:none; }
+  .toc a {
+    white-space: nowrap;
+    font-size: 0.8rem; font-family: 'JetBrains Mono', monospace;
+    color: var(--muted); text-decoration: none;
+    padding: 0.35rem 0.75rem; border-radius: 0.4rem;
+    transition: all 0.2s; border: 1px solid transparent;
+  }
+  .toc a:hover { color: var(--teal); border-color: var(--teal-dim); }
+
+  /* ── LAYOUT ── */
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 2rem; }
+  section { padding: 5rem 0; border-bottom: 1px solid var(--border); }
+
+  /* ── SECTION HEADERS ── */
+  .section-num {
+    font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;
+    color: var(--teal); letter-spacing: 0.12em;
+    margin-bottom: 0.5rem; display: block;
+  }
+  h2.section-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(2rem, 4vw, 3rem);
+    line-height: 1.15; margin-bottom: 1rem;
+  }
+  h3 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.5rem; margin: 2.5rem 0 1rem;
+    color: var(--amber);
+  }
+  h4 {
+    font-size: 1rem; font-weight: 800; color: var(--teal);
+    margin: 1.5rem 0 0.5rem;
+    text-transform: uppercase; letter-spacing: 0.08em;
+  }
+  p { margin-bottom: 1.2rem; color: #c9d1d9; }
+
+  /* ── CALLOUT BOXES ── */
+  .callout {
+    border-left: 3px solid var(--teal);
+    background: rgba(57,208,216,0.06);
+    padding: 1.25rem 1.5rem;
+    border-radius: 0 0.75rem 0.75rem 0;
+    margin: 1.5rem 0;
+  }
+  .callout.amber  { border-color:var(--amber);  background:rgba(240,168,48,0.06); }
+  .callout.coral  { border-color:var(--coral);  background:rgba(255,107,107,0.06); }
+  .callout.violet { border-color:var(--violet); background:rgba(167,139,250,0.06); }
+  .callout.green  { border-color:var(--green);  background:rgba(63,185,80,0.06); }
+
+  .callout-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem; letter-spacing: 0.12em;
+    color: var(--teal); text-transform: uppercase;
+    margin-bottom: 0.4rem; display: block;
+  }
+  .callout.amber  .callout-label { color:var(--amber); }
+  .callout.coral  .callout-label { color:var(--coral); }
+  .callout.violet .callout-label { color:var(--violet); }
+  .callout.green  .callout-label { color:var(--green); }
+  .callout p { margin:0; color:var(--text); }
+
+  /* ── CODE BLOCKS ── */
+  .code-block {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem; overflow: hidden;
+    margin: 1.5rem 0;
+  }
+  .code-header {
+    display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .code-dot { width:12px; height:12px; border-radius:50%; }
+  .code-dot.red    { background:#ff5f56; }
+  .code-dot.yellow { background:#ffbd2e; }
+  .code-dot.green  { background:#27c93f; }
+  .code-lang {
+    margin-left: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem; color: var(--muted); letter-spacing: 0.1em;
+  }
+  pre {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem; line-height: 1.7;
+    padding: 1.5rem; overflow-x: auto;
+    color: #e6edf3; tab-size: 2;
+  }
+  .kw { color:#ff7b72; }
+  .ty { color:#79c0ff; }
+  .fn { color:#d2a8ff; }
+  .cm { color:#6a737d; font-style:italic; }
+  .st { color:#a5d6ff; }
+  .nm { color:#f0a830; }
+  .op { color:#ff7b72; }
+
+  /* ── CARDS ── */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem; margin: 2rem 0;
+  }
+  .card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 1rem; padding: 1.5rem;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .card:hover { border-color: var(--teal-dim); transform: translateY(-2px); }
+  .card-icon { font-size: 1.8rem; margin-bottom: 0.75rem; display: block; }
+  .card h4 { margin: 0 0 0.5rem; font-size: 1rem; }
+  .card p  { margin: 0; font-size: 0.9rem; color: var(--muted); }
+
+  /* ── SVG GRAPH DISPLAY ── */
+  .graph-display {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 1rem; padding: 1.5rem;
+    margin: 2rem 0; text-align: center;
+  }
+  .graph-display svg { max-width: 100%; }
+
+  /* ── HIGHLIGHT INLINE ── */
+  .highlight {
+    background: rgba(57,208,216,0.1);
+    color: var(--teal); padding: 0.1em 0.4em;
+    border-radius: 0.3em; font-weight: 700;
+  }
+  .inline-mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9em; color: var(--amber);
+    background: rgba(240,168,48,0.08);
+    padding: 0.1em 0.4em; border-radius: 0.25em;
+  }
+
+  /* ── TABLE ── */
+  .fancy-table {
+    width: 100%; border-collapse: separate; border-spacing: 0;
+    border-radius: 0.75rem; overflow: hidden;
+    border: 1px solid var(--border); margin: 1.5rem 0;
+  }
+  .fancy-table th {
+    background: var(--surface); color: var(--teal);
+    font-family: 'JetBrains Mono', monospace; font-size: 0.78rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 0.85rem 1.25rem; text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .fancy-table td {
+    padding: 0.75rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.9rem; color: #c9d1d9;
+  }
+  .fancy-table tr:last-child td { border-bottom: none; }
+  .fancy-table tr:hover td { background: rgba(255,255,255,0.03); }
+  .fancy-table td.good { color:var(--green); }
+  .fancy-table td.warn { color:var(--amber); }
+  .fancy-table td.bad  { color:var(--coral); }
+
+  /* ── QUEUE VISUAL ── */
+  .queue-vis {
+    display: flex; align-items: center; gap: 0;
+    margin: 1.5rem 0; font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem; overflow-x: auto;
+  }
+  .queue-cell {
+    min-width: 52px; height: 52px;
+    border: 1px solid var(--border); background: var(--bg2);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text); flex-shrink: 0;
+  }
+  .queue-cell:first-of-type { border-radius: 0.5rem 0 0 0.5rem; }
+  .queue-cell:last-of-type  { border-radius: 0 0.5rem 0.5rem 0; }
+  .queue-cell.head { background: rgba(57,208,216,0.12); border-color: var(--teal); color: var(--teal); }
+  .queue-cell.enq  { background: rgba(240,168,48,0.1);  border-color: var(--amber); color: var(--amber); }
+  .queue-arrow { padding: 0 0.75rem; color: var(--muted); font-size: 1.1rem; }
+
+  /* ── COMPARE STRIP ── */
+  .compare-strip {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 0; margin: 2rem 0;
+    border: 1px solid var(--border); border-radius: 1rem;
+    overflow: hidden;
+  }
+  @media(max-width:700px){ .compare-strip{grid-template-columns:1fr;} }
+  .compare-side {
+    padding: 1.5rem;
+    background: var(--bg2);
+  }
+  .compare-side:first-child { border-right: 1px solid var(--border); }
+  .compare-side h4 { margin-top:0; }
+  .compare-side ul { padding-left: 1.25rem; }
+  .compare-side li { color: #c9d1d9; font-size: 0.9rem; margin-bottom: 0.4rem; }
+
+  /* ── BFS TRACE ANIMATOR ── */
+  .trace-box {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 1rem; overflow: hidden; margin: 2rem 0;
+  }
+  .trace-header {
+    background: var(--surface); padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+    justify-content: space-between; flex-wrap: wrap; gap: 1rem;
+  }
+  .trace-title { font-family: 'DM Serif Display', serif; font-size: 1.1rem; }
+  .trace-controls { display: flex; gap: 0.5rem; }
+
+  .btn {
+    font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;
+    padding: 0.45rem 1rem; border-radius: 0.5rem;
+    border: 1px solid var(--border); background: var(--surface);
+    color: var(--text); cursor: pointer; transition: all 0.15s;
+  }
+  .btn:hover { border-color: var(--teal); color: var(--teal); }
+  .btn.primary { background: var(--teal); border-color: var(--teal); color: #000; font-weight: 700; }
+  .btn.primary:hover { background: #5ee7ee; }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  .trace-body {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 0;
+  }
+  @media(max-width:700px){ .trace-body{grid-template-columns:1fr;} }
+
+  .trace-graph { padding: 1.5rem; border-right: 1px solid var(--border); }
+  .trace-log {
+    padding: 1.5rem;
+    font-family: 'JetBrains Mono', monospace; font-size: 0.78rem;
+    max-height: 380px; overflow-y: auto;
+  }
+  .trace-log::-webkit-scrollbar { width: 4px; }
+  .trace-log::-webkit-scrollbar-track { background: transparent; }
+  .trace-log::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .trace-step {
+    padding: 0.5rem 0.75rem; border-radius: 0.4rem;
+    margin-bottom: 0.4rem; color: var(--muted);
+    border-left: 3px solid transparent; transition: all 0.2s;
+  }
+  .trace-step.active   { color: var(--text); border-color: var(--teal); background: rgba(57,208,216,0.06); }
+  .trace-step.enqueue  { color: var(--amber); border-color: var(--amber); background: rgba(240,168,48,0.05); }
+  .trace-step.dequeue  { color: var(--teal);  border-color: var(--teal);  background: rgba(57,208,216,0.07); }
+  .trace-step.skip     { color: #555e6c; border-color: #2d3540; }
+  .trace-step.shortest { color: var(--green); border-color: var(--green); background: rgba(63,185,80,0.06); }
+  .trace-step.done     { color: var(--violet); border-color: var(--violet); background: rgba(167,139,250,0.06); }
+
+  /* State table */
+  .trace-state {
+    border-top: 1px solid var(--border);
+    padding: 1rem 1.5rem;
+    display: grid; grid-template-columns: auto 1fr auto 1fr;
+    gap: 0.75rem 2rem; align-items: start;
+    font-family: 'JetBrains Mono', monospace; font-size: 0.78rem;
+  }
+  @media(max-width:700px){ .trace-state{grid-template-columns:1fr;} }
+
+  .state-label { color: var(--muted); align-self: center; white-space: nowrap; }
+  .state-val { display: flex; flex-wrap: wrap; gap: 0.3rem; align-items: center; }
+
+  .state-cell {
+    min-width: 36px; height: 36px;
+    border: 1px solid var(--border);
+    border-radius: 0.35rem;
+    background: var(--bg3);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--muted); font-size: 0.75rem;
+    transition: all 0.3s;
+  }
+  .state-cell.visited  { border-color:var(--green);  color:var(--green);  background:rgba(63,185,80,0.12); }
+  .state-cell.current  { border-color:var(--teal);   color:var(--teal);   background:rgba(57,208,216,0.15); }
+  .state-cell.enqueued { border-color:var(--amber);  color:var(--amber);  background:rgba(240,168,48,0.12); }
+
+  .queue-display {
+    display: flex; align-items: center; gap: 0;
+    flex-wrap: wrap; row-gap: 0.3rem;
+  }
+  .qd-cell {
+    min-width: 36px; height: 36px; padding: 0 8px;
+    border: 1px solid var(--amber); border-right: none;
+    background: rgba(240,168,48,0.1);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--amber); font-size: 0.75rem;
+    transition: all 0.3s;
+  }
+  .qd-cell:last-child { border-right: 1px solid var(--amber); border-radius: 0 0.35rem 0.35rem 0; }
+  .qd-cell:first-child{ border-radius: 0.35rem 0 0 0.35rem; }
+  .qd-cell.head { background:rgba(57,208,216,0.2); border-color:var(--teal); color:var(--teal); }
+  .qd-empty { color:#444; font-size:0.75rem; }
+
+  /* Edge badge */
+  .edge-badge {
+    display: inline-block; font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em;
+    padding: 0.2em 0.6em; border-radius: 0.3em;
+    text-transform: uppercase; margin-right: 0.5rem;
+  }
+  .edge-badge.tree { background:rgba(240,168,48,0.15); color:var(--amber); border:1px solid var(--amber); }
+  .edge-badge.cross{ background:rgba(167,139,250,0.15); color:var(--violet); border:1px solid var(--violet); }
+
+  /* Scroll reveal */
+  .scroll-reveal { opacity:0; transform:translateY(28px); transition:opacity 0.6s ease, transform 0.6s ease; }
+  .scroll-reveal.visible { opacity:1; transform:none; }
+
+  /* Footer */
+  footer {
+    text-align: center; padding: 3rem 2rem;
+    font-size: 0.85rem; color: var(--muted);
+    font-family: 'JetBrains Mono', monospace; border-top: 1px solid var(--border);
+  }
+
+  /* Level bands */
+  .level-band {
+    display: flex; gap: 0; margin: 2rem 0;
+    border-radius: 0.75rem; overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .level-col {
+    flex: 1; padding: 1rem;
+    background: var(--bg2); text-align: center;
+    border-right: 1px solid var(--border); font-size: 0.85rem;
+  }
+  .level-col:last-child { border-right: none; }
+  .level-col .lnum {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.5rem; font-weight: 700;
+    display: block; margin-bottom: 0.35rem;
+  }
+  .level-col p { margin:0; font-size:0.78rem; color:var(--muted); }
+  .level-col.lv0 .lnum { color:var(--teal); }
+  .level-col.lv1 .lnum { color:var(--amber); }
+  .level-col.lv2 .lnum { color:var(--coral); }
+  .level-col.lv3 .lnum { color:var(--violet); }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════
+     HERO
+══════════════════════════════════════════════════════════ -->
+<div class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-rings">
+    <div class="ring"></div>
+    <div class="ring"></div>
+    <div class="ring"></div>
+    <div class="ring"></div>
+  </div>
+
+  <!-- Background BFS graph hint -->
+  <svg style="position:absolute;inset:0;width:100%;height:100%;opacity:0.08;pointer-events:none" viewBox="0 0 1200 700">
+    <circle cx="600" cy="350" r="42" fill="none" stroke="#39d0d8" stroke-width="2"/>
+    <circle cx="400" cy="200" r="34" fill="none" stroke="#f0a830" stroke-width="1.5"/>
+    <circle cx="800" cy="200" r="34" fill="none" stroke="#f0a830" stroke-width="1.5"/>
+    <circle cx="350" cy="440" r="34" fill="none" stroke="#ff6b6b" stroke-width="1.5"/>
+    <circle cx="650" cy="500" r="34" fill="none" stroke="#ff6b6b" stroke-width="1.5"/>
+    <circle cx="900" cy="440" r="34" fill="none" stroke="#ff6b6b" stroke-width="1.5"/>
+    <line x1="600" y1="350" x2="400" y2="200" stroke="#39d0d8" stroke-width="1.5"/>
+    <line x1="600" y1="350" x2="800" y2="200" stroke="#39d0d8" stroke-width="1.5"/>
+    <line x1="600" y1="350" x2="350" y2="440" stroke="#39d0d8" stroke-width="1.5"/>
+    <line x1="600" y1="350" x2="650" y2="500" stroke="#39d0d8" stroke-width="1.5"/>
+    <line x1="600" y1="350" x2="900" y2="440" stroke="#39d0d8" stroke-width="1.5"/>
+    <text x="600" y="358" text-anchor="middle" fill="#39d0d8" font-family="JetBrains Mono" font-size="20" font-weight="bold">s</text>
+    <text x="400" y="207" text-anchor="middle" fill="#f0a830" font-family="JetBrains Mono" font-size="16">1</text>
+    <text x="800" y="207" text-anchor="middle" fill="#f0a830" font-family="JetBrains Mono" font-size="16">2</text>
+    <text x="350" y="447" text-anchor="middle" fill="#ff6b6b" font-family="JetBrains Mono" font-size="16">3</text>
+    <text x="650" y="507" text-anchor="middle" fill="#ff6b6b" font-family="JetBrains Mono" font-size="16">4</text>
+    <text x="900" y="447" text-anchor="middle" fill="#ff6b6b" font-family="JetBrains Mono" font-size="16">5</text>
+  </svg>
+
+  <div class="hero-content">
+    <div class="lecture-tag">LECTURE 10 OF 12 &nbsp;·&nbsp; GRAPH ALGORITHMS</div>
+
+    <h1 class="hero-title">
+      <span class="accent">Breadth-</span><br>
+      <span class="accent2">First</span> Search
+    </h1>
+
+    <p class="hero-sub">
+      The algorithm that explores a graph in perfect concentric rings — and as a byproduct, finds the shortest path between any two vertices in linear time.
+    </p>
+
+    <p class="hero-contrast">DFS dives deep. BFS sweeps wide. Both visit every vertex exactly once. Only one guarantees shortest paths.</p>
+
+    <div class="hero-pills">
+      <span class="pill">Queue-based traversal</span>
+      <span class="pill">Shortest paths (unweighted)</span>
+      <span class="pill">Level-by-level expansion</span>
+      <span class="pill">O(V + E) time</span>
+      <span class="pill">Bipartite checking</span>
+      <span class="pill">Web crawlers</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     STICKY NAV
+══════════════════════════════════════════════════════════ -->
+<nav class="toc">
+  <a href="#sec-intuition">01 Intuition</a>
+  <a href="#sec-queue">02 The Queue</a>
+  <a href="#sec-algorithm">03 Algorithm</a>
+  <a href="#sec-shortest">04 Shortest Paths</a>
+  <a href="#sec-trace">05 Live Trace</a>
+  <a href="#sec-apps">06 Applications</a>
+  <a href="#sec-edges">07 Edge Types</a>
+  <a href="#sec-compare">08 BFS vs DFS</a>
+  <a href="#sec-summary">09 Summary</a>
+</nav>
+
+<!-- ══════════════════════════════════════════════════════════
+     §1 INTUITION
+══════════════════════════════════════════════════════════ -->
+<section id="sec-intuition">
+<div class="container">
+  <span class="section-num">SECTION 01</span>
+  <h2 class="section-title">The Ripple Intuition</h2>
+
+  <p>Drop a pebble in still water. Ripples spread outward in perfect circles, all points at distance 1 reached before any point at distance 2. Breadth-First Search works exactly like this — but instead of water, the "wave" spreads along graph edges.</p>
+
+  <p>Start at any vertex <strong>s</strong>. BFS visits every vertex at distance 1 (direct neighbors) first. Only then does it visit vertices at distance 2. Then distance 3, and so on. Every "level" of the graph is fully explored before the next one begins.</p>
+
+  <div class="graph-display scroll-reveal">
+    <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1.25rem">BFS from vertex 0 — vertices grouped by shortest distance (level)</p>
+    <svg viewBox="0 0 700 362" width="700" height="362">
+      <!-- Level halos -->
+      <circle cx="350" cy="170" r="65"  fill="none" stroke="rgba(57,208,216,0.12)" stroke-width="40"/>
+      <circle cx="350" cy="170" r="145" fill="none" stroke="rgba(240,168,48,0.08)"  stroke-width="40"/>
+      <circle cx="350" cy="170" r="225" fill="none" stroke="rgba(255,107,107,0.06)" stroke-width="40"/>
+
+      <!-- Edges -->
+      <line x1="350" y1="170" x2="230" y2="90"  stroke="#39d0d8" stroke-width="2.5"/>
+      <line x1="350" y1="170" x2="470" y2="90"  stroke="#39d0d8" stroke-width="2.5"/>
+      <line x1="350" y1="170" x2="210" y2="220" stroke="#39d0d8" stroke-width="2.5"/>
+      <line x1="350" y1="170" x2="490" y2="220" stroke="#39d0d8" stroke-width="2.5"/>
+      <line x1="230" y1="90"  x2="130" y2="40"  stroke="#f0a830" stroke-width="2"/>
+      <line x1="470" y1="90"  x2="570" y2="40"  stroke="#f0a830" stroke-width="2"/>
+      <line x1="210" y1="220" x2="120" y2="290" stroke="#f0a830" stroke-width="2"/>
+      <line x1="490" y1="220" x2="580" y2="290" stroke="#f0a830" stroke-width="2"/>
+      <!-- cross edges at same level (lighter) -->
+      <line x1="230" y1="90"  x2="470" y2="90"  stroke="#30363d" stroke-width="1.5" stroke-dasharray="6,4"/>
+      <line x1="210" y1="220" x2="490" y2="220" stroke="#30363d" stroke-width="1.5" stroke-dasharray="6,4"/>
+
+      <!-- Level labels -->
+      <text x="350" y="174" text-anchor="middle" fill="rgba(57,208,216,0.3)" font-family="JetBrains Mono" font-size="38" font-weight="bold">0</text>
+      <text x="145" y="180" text-anchor="middle" fill="rgba(240,168,48,0.2)"  font-family="JetBrains Mono" font-size="30" font-weight="bold">1</text>
+      <text x="555" y="180" text-anchor="middle" fill="rgba(240,168,48,0.2)"  font-family="JetBrains Mono" font-size="30" font-weight="bold">1</text>
+      <text x="80"  y="290" text-anchor="middle" fill="rgba(255,107,107,0.25)"font-family="JetBrains Mono" font-size="24" font-weight="bold">2</text>
+      <text x="620" y="290" text-anchor="middle" fill="rgba(255,107,107,0.25)"font-family="JetBrains Mono" font-size="24" font-weight="bold">2</text>
+
+      <!-- source -->
+      <circle cx="350" cy="170" r="32" fill="rgba(57,208,216,0.2)" stroke="#39d0d8" stroke-width="2.5"/>
+      <text x="350" y="165" text-anchor="middle" fill="#39d0d8" font-family="JetBrains Mono" font-size="16" font-weight="bold">0</text>
+      <text x="350" y="182" text-anchor="middle" fill="#39d0d8" font-family="Nunito" font-size="9">source</text>
+
+      <!-- level 1 -->
+      <circle cx="230" cy="90" r="28" fill="rgba(240,168,48,0.15)" stroke="#f0a830" stroke-width="2"/>
+      <text x="230" y="95" text-anchor="middle" fill="#f0a830" font-family="JetBrains Mono" font-size="15">1</text>
+      <circle cx="470" cy="90" r="28" fill="rgba(240,168,48,0.15)" stroke="#f0a830" stroke-width="2"/>
+      <text x="470" y="95" text-anchor="middle" fill="#f0a830" font-family="JetBrains Mono" font-size="15">2</text>
+      <circle cx="210" cy="220" r="28" fill="rgba(240,168,48,0.15)" stroke="#f0a830" stroke-width="2"/>
+      <text x="210" y="225" text-anchor="middle" fill="#f0a830" font-family="JetBrains Mono" font-size="15">5</text>
+      <circle cx="490" cy="220" r="28" fill="rgba(240,168,48,0.15)" stroke="#f0a830" stroke-width="2"/>
+      <text x="490" y="225" text-anchor="middle" fill="#f0a830" font-family="JetBrains Mono" font-size="15">6</text>
+
+      <!-- level 2 -->
+      <circle cx="130" cy="40" r="24" fill="rgba(255,107,107,0.12)" stroke="#ff6b6b" stroke-width="1.5"/>
+      <text x="130" y="45" text-anchor="middle" fill="#ff6b6b" font-family="JetBrains Mono" font-size="13">3</text>
+      <circle cx="570" cy="40" r="24" fill="rgba(255,107,107,0.12)" stroke="#ff6b6b" stroke-width="1.5"/>
+      <text x="570" y="45" text-anchor="middle" fill="#ff6b6b" font-family="JetBrains Mono" font-size="13">4</text>
+      <circle cx="120" cy="290" r="24" fill="rgba(255,107,107,0.12)" stroke="#ff6b6b" stroke-width="1.5"/>
+      <text x="120" y="295" text-anchor="middle" fill="#ff6b6b" font-family="JetBrains Mono" font-size="13">7</text>
+      <circle cx="580" cy="290" r="24" fill="rgba(255,107,107,0.12)" stroke="#ff6b6b" stroke-width="1.5"/>
+      <text x="580" y="295" text-anchor="middle" fill="#ff6b6b" font-family="JetBrains Mono" font-size="13">8</text>
+
+      <!-- Legend -->
+      <circle cx="80" cy="340" r="8" fill="rgba(57,208,216,0.2)" stroke="#39d0d8" stroke-width="1.5"/>
+      <text x="95" y="344" fill="#39d0d8" font-family="Nunito" font-size="12">Level 0 — dist=0</text>
+      <circle cx="240" cy="340" r="8" fill="rgba(240,168,48,0.15)" stroke="#f0a830" stroke-width="1.5"/>
+      <text x="255" y="344" fill="#f0a830" font-family="Nunito" font-size="12">Level 1 — dist=1</text>
+      <circle cx="400" cy="340" r="8" fill="rgba(255,107,107,0.12)" stroke="#ff6b6b" stroke-width="1.5"/>
+      <text x="415" y="344" fill="#ff6b6b" font-family="Nunito" font-size="12">Level 2 — dist=2</text>
+    </svg>
+  </div>
+
+  <div class="callout scroll-reveal">
+    <span class="callout-label">The Central Guarantee</span>
+    <p>BFS visits vertices in non-decreasing order of their distance from the source. When BFS first reaches a vertex, it has found the <strong>shortest possible path</strong> to it (in terms of number of edges). This is the property DFS cannot provide.</p>
+  </div>
+
+  <h3>Why Does It Matter?</h3>
+  <div class="card-grid scroll-reveal">
+    <div class="card">
+      <span class="card-icon">🕸️</span>
+      <h4>Web Crawlers</h4>
+      <p>Google's web crawler explores pages via links. BFS ensures nearby, highly-connected pages are indexed before distant ones — prioritizing relevance.</p>
+    </div>
+    <div class="card">
+      <span class="card-icon">👥</span>
+      <h4>"Degrees of Separation"</h4>
+      <p>Finding your "6 degrees" from Kevin Bacon is BFS on the actor collaboration graph. BFS finds the minimum number of hops between people.</p>
+    </div>
+    <div class="card">
+      <span class="card-icon">🏠</span>
+      <h4>GPS Routing</h4>
+      <p>Finding the route with fewest turns (ignoring road lengths) is BFS on a city map graph. Each intersection is a vertex; roads are edges.</p>
+    </div>
+    <div class="card">
+      <span class="card-icon">🎮</span>
+      <h4>Puzzle Solving</h4>
+      <p>Rubik's Cube, 8-puzzle, word ladders — model states as vertices and valid moves as edges. BFS finds the <em>minimum</em> number of moves to reach the goal.</p>
+    </div>
+    <div class="card">
+      <span class="card-icon">🔌</span>
+      <h4>Network Broadcasting</h4>
+      <p>Broadcasting a message to all nodes in a network — BFS naturally produces the optimal spanning tree for flooding a message with minimum hops.</p>
+    </div>
+    <div class="card">
+      <span class="card-icon">🧩</span>
+      <h4>Bipartite Testing</h4>
+      <p>Coloring a graph with two colors so no adjacent vertices share a color is a classic 2-coloring problem — solvable in O(V+E) using BFS level structure.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     §2 THE QUEUE
+══════════════════════════════════════════════════════════ -->
+<section id="sec-queue">
+<div class="container">
+  <span class="section-num">SECTION 02</span>
+  <h2 class="section-title">The Queue — BFS's Engine</h2>
+
+  <p>Recall that DFS gets its "go deep first" behavior from a <em>stack</em> — Last In, First Out. The last vertex pushed is the first one explored. This causes the algorithm to rush down one path before backtracking.</p>
+
+  <p>BFS swaps the stack for a <span class="highlight">queue</span> — First In, First Out. The first vertex enqueued is the first one processed. Vertices discovered earlier are explored earlier. Because neighbors are added to the back of the queue and pulled from the front, BFS naturally processes all vertices at distance <em>k</em> before any at distance <em>k+1</em>.</p>
+
+  <div class="callout amber scroll-reveal">
+    <span class="callout-label">The One-Line Insight</span>
+    <p>Change a stack to a queue, and DFS becomes BFS. That single data structure swap is the entire difference between the two algorithms. Same graph, same code structure, same O(V+E) complexity — but completely different traversal order and completely different guarantees.</p>
+  </div>
+
+  <h3>Queue Operations</h3>
+  <div class="card-grid scroll-reveal">
+    <div class="card">
+      <h4>enqueue (push back)</h4>
+      <p>Add a vertex to the <em>back</em> of the queue. Called when we discover a new, unvisited neighbor. O(1).</p>
+    </div>
+    <div class="card">
+      <h4>dequeue (pop front)</h4>
+      <p>Remove and return the vertex at the <em>front</em> of the queue. This is the vertex we process next. O(1).</p>
+    </div>
+    <div class="card">
+      <h4>marked[ ] check</h4>
+      <p>Before enqueuing a vertex, we check <span class="inline-mono">marked[w]</span>. If already true, skip it — we never enqueue the same vertex twice.</p>
+    </div>
+  </div>
+
+  <h3>Visual: Queue State During BFS</h3>
+  <p>Watch how the queue evolves as BFS processes the graph. Each row pairs the <strong>graph state</strong> (which vertices are visited) with the <strong>queue contents</strong> at that moment. The <span style="color:var(--teal)">teal</span> front cell is about to be dequeued; <span style="color:var(--amber)">amber</span> cells are waiting.</p>
+
+  <div class="graph-display scroll-reveal" style="overflow-x:auto">
+    <!-- Column labels -->
+    <div style="display:grid;grid-template-columns:200px 220px 1fr;gap:0;margin-bottom:0.75rem;padding:0 0.5rem">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em">Operation</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em">Queue  [FRONT → BACK]</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em">Visited nodes (graph state)</span>
+    </div>
+
+    <!-- Each step row -->
+    <div style="display:flex;flex-direction:column;gap:2px">
+
+      <!-- Step 0: Init -->
+      <div style="display:grid;grid-template-columns:200px 220px 1fr;align-items:center;gap:0;background:rgba(57,208,216,0.04);border:1px solid rgba(57,208,216,0.15);border-radius:0.5rem;padding:0.6rem 0.75rem">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--teal)">Init: enqueue 0</span>
+        <div style="display:flex;align-items:center;gap:0">
+          <span style="font-size:0.68rem;color:var(--muted);margin-right:6px;font-family:'JetBrains Mono',monospace">FRONT→</span>
+          <div class="queue-cell head" style="width:40px;height:40px;border-radius:6px">0</div>
+          <span style="font-size:0.68rem;color:var(--muted);margin-left:6px;font-family:'JetBrains Mono',monospace">←BACK</span>
+        </div>
+        <svg viewBox="0 0 260 130" width="260" height="130" style="flex-shrink:0">
+          <line x1="40" y1="65" x2="100" y2="25" stroke="#30363d" stroke-width="1.5"/>
+          <line x1="40" y1="65" x2="160" y2="65" stroke="#30363d" stroke-width="1.5"/>
+          <line x1="40" y1="65" x2="40" y2="105" stroke="#30363d" stroke-width="1.5"/>
+          <line x1="100" y1="25" x2="160" y2="65" stroke="#30363d" stroke-width="1.5"/>
+          <line x1="160" y1="65" x2="220" y2="25" stroke="#30363d" stroke-width="1.5"/>
+          <line x1="160" y1="65" x2="220" y2="105" stroke="#30363d" stroke-width="1.5"/>
+          <line x1="220" y1="25" x2="220" y2="105" stroke="#30363d" stroke-width="1.5"/>
+          <line x1="220" y1="25" x2="40" y2="105" stroke="#30363d" stroke-width="1.5"/>
+          <!-- Vertex 0: teal (in queue) -->
+          <circle cx="40"  cy="65"  r="20" fill="rgba(57,208,216,0.2)" stroke="#39d0d8" stroke-width="2"/>
+          <text x="40"  y="70"  text-anchor="middle" fill="#39d0d8"  font-family="JetBrains Mono" font-size="12">0</text>
+          <!-- Others: gray -->
+          <circle cx="100" cy="25"  r="20" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+          <text x="100" y="30"  text-anchor="middle" fill="#555e6c" font-family="JetBrains Mono" font-size="12">1</text>
+          <circle cx="160" cy="65"  r="20" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+          <text x="160" y="70"  text-anchor="middle" fill="#555e6c" font-family="JetBrains Mono" font-size="12">2</text>
+          <circle cx="220" cy="25"  r="20" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+          <text x="220" y="30"  text-anchor="middle" fill="#555e6c" font-family="JetBrains Mono" font-size="12">3</text>
+          <circle cx="220" cy="105" r="20" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+          <text x="220" y="110" text-anchor="middle" fill="#555e6c" font-family="JetBrains Mono" font-size="12">4</text>
+          <circle cx="40"  cy="105" r="20" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+          <text x="40"  y="110" text-anchor="middle" fill="#555e6c" font-family="JetBrains Mono" font-size="12">5</text>
+        </svg>
+      </div>
+
+      <!-- Step 1: Dequeue 0, enqueue 1,2,5 -->
+      <div style="display:grid;grid-template-columns:200px 220px 1fr;align-items:center;gap:0;background:rgba(240,168,48,0.04);border:1px solid rgba(240,168,48,0.15);border-radius:0.5rem;padding:0.6rem 0.75rem">
+        <div>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--amber)">Dequeue 0</span><br>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--green)">Enqueue 1, 2, 5</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:0">
+          <span style="font-size:0.68rem;color:var(--muted);margin-right:6px;font-family:'JetBrains Mono',monospace">FRONT→</span>
+          <div class="queue-cell head" style="width:40px;height:40px;border-radius:6px 0 0 6px">1</div>
+          <div class="queue-cell enq"  style="width:40px;height:40px;border-radius:0">2</div>
+          <div class="queue-cell enq"  style="width:40px;height:40px;border-radius:0 6px 6px 0">5</div>
+          <span style="font-size:0.68rem;color:var(--muted);margin-left:6px;font-family:'JetBrains Mono',monospace">←BACK</span>
+        </div>
+        <svg viewBox="0 0 260 130" width="260" height="130" style="flex-shrink:0">
+          <line x1="40" y1="65" x2="100" y2="25" stroke="#3fb950" stroke-width="2.5"/>
+          <line x1="40" y1="65" x2="160" y2="65" stroke="#3fb950" stroke-width="2.5"/>
+          <line x1="40" y1="65" x2="40" y2="105" stroke="#3fb950" stroke-width="2.5"/>
+          <line x1="100" y1="25" x2="160" y2="65" stroke="#30363d" stroke-width="1.5"/>
+          <line x1="160" y1="65" x2="220" y2="25" stroke="#30363d" stroke-width="1.5"/>
+          <line x1="160" y1="65" x2="220" y2="105" stroke="#30363d" stroke-width="1.5"/>
+          <line x1="220" y1="25" x2="220" y2="105" stroke="#30363d" stroke-width="1.5"/>
+          <line x1="220" y1="25" x2="40" y2="105" stroke="#30363d" stroke-width="1.5"/>
+          <!-- 0: green visited -->
+          <circle cx="40"  cy="65"  r="20" fill="rgba(63,185,80,0.15)"  stroke="#3fb950" stroke-width="2"/>
+          <text x="40"  y="70"  text-anchor="middle" fill="#3fb950"  font-family="JetBrains Mono" font-size="12">0</text>
+          <!-- 1,2,5: amber (enqueued) -->
+          <circle cx="100" cy="25"  r="20" fill="rgba(240,168,48,0.15)" stroke="#f0a830" stroke-width="2"/>
+          <text x="100" y="30"  text-anchor="middle" fill="#f0a830" font-family="JetBrains Mono" font-size="12">1</text>
+          <circle cx="160" cy="65"  r="20" fill="rgba(240,168,48,0.15)" stroke="#f0a830" stroke-width="2"/>
+          <text x="160" y="70"  text-anchor="middle" fill="#f0a830" font-family="JetBrains Mono" font-size="12">2</text>
+          <circle cx="40"  cy="105" r="20" fill="rgba(240,168,48,0.15)" stroke="#f0a830" stroke-width="2"/>
+          <text x="40"  y="110" text-anchor="middle" fill="#f0a830" font-family="JetBrains Mono" font-size="12">5</text>
+          <!-- 3,4: gray -->
+          <circle cx="220" cy="25"  r="20" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+          <text x="220" y="30"  text-anchor="middle" fill="#555e6c" font-family="JetBrains Mono" font-size="12">3</text>
+          <circle cx="220" cy="105" r="20" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+          <text x="220" y="110" text-anchor="middle" fill="#555e6c" font-family="JetBrains Mono" font-size="12">4</text>
+        </svg>
+      </div>
+
+      <!-- Step 2: Dequeue 1 -->
+      <div style="display:grid;grid-template-columns:200px 220px 1fr;align-items:center;gap:0;background:rgba(240,168,48,0.04);border:1px solid rgba(240,168,48,0.1);border-radius:0.5rem;padding:0.6rem 0.75rem">
+        <div>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--amber)">Dequeue 1</span><br>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--muted)">0, 2 already marked</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:0">
+          <span style="font-size:0.68rem;color:var(--muted);margin-right:6px;font-family:'JetBrains Mono',monospace">FRONT→</span>
+          <div class="queue-cell head" style="width:40px;height:40px;border-radius:6px 0 0 6px">2</div>
+          <div class="queue-cell enq"  style="width:40px;height:40px;border-radius:0 6px 6px 0">5</div>
+          <span style="font-size:0.68rem;color:var(--muted);margin-left:6px;font-family:'JetBrains Mono',monospace">←BACK</span>
+        </div>
+        <svg viewBox="0 0 260 130" width="260" height="130" style="flex-shrink:0">
+          <line x1="40" y1="65" x2="100" y2="25" stroke="#3fb950" stroke-width="2.5"/>
+          <line x1="40" y1="65" x2="160" y2="65" stroke="#3fb950" stroke-width="2.5"/>
+          <line x1="40" y1="65" x2="40" y2="105" stroke="#3fb950" stroke-width="2.5"/>
+          <line x1="100" y1="25" x2="160" y2="65" stroke="#30363d" stroke-width="1.5"/>
+          <line x1="160" y1="65" x2="220" y2="25" stroke="#30363d" stroke-width="1.5"/>
+          <line x1="160" y1="65" x2="220" y2="105" stroke="#30363d" stroke-width="1.5"/>
+          <line x1="220" y1="25" x2="220" y2="105" stroke="#30363d" stroke-width="1.5"/>
+          <line x1="220" y1="25" x2="40" y2="105" stroke="#30363d" stroke-width="1.5"/>
+          <circle cx="40"  cy="65"  r="20" fill="rgba(63,185,80,0.15)"  stroke="#3fb950" stroke-width="2"/>
+          <text x="40"  y="70"  text-anchor="middle" fill="#3fb950"  font-family="JetBrains Mono" font-size="12">0</text>
+          <circle cx="100" cy="25"  r="20" fill="rgba(63,185,80,0.15)"  stroke="#3fb950" stroke-width="2"/>
+          <text x="100" y="30"  text-anchor="middle" fill="#3fb950"  font-family="JetBrains Mono" font-size="12">1</text>
+          <circle cx="160" cy="65"  r="20" fill="rgba(240,168,48,0.15)" stroke="#f0a830" stroke-width="2"/>
+          <text x="160" y="70"  text-anchor="middle" fill="#f0a830" font-family="JetBrains Mono" font-size="12">2</text>
+          <circle cx="220" cy="25"  r="20" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+          <text x="220" y="30"  text-anchor="middle" fill="#555e6c" font-family="JetBrains Mono" font-size="12">3</text>
+          <circle cx="220" cy="105" r="20" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+          <text x="220" y="110" text-anchor="middle" fill="#555e6c" font-family="JetBrains Mono" font-size="12">4</text>
+          <circle cx="40"  cy="105" r="20" fill="rgba(240,168,48,0.15)" stroke="#f0a830" stroke-width="2"/>
+          <text x="40"  y="110" text-anchor="middle" fill="#f0a830" font-family="JetBrains Mono" font-size="12">5</text>
+        </svg>
+      </div>
+
+      <!-- Step 3: Dequeue 2, enqueue 3,4 -->
+      <div style="display:grid;grid-template-columns:200px 220px 1fr;align-items:center;gap:0;background:rgba(240,168,48,0.04);border:1px solid rgba(240,168,48,0.15);border-radius:0.5rem;padding:0.6rem 0.75rem">
+        <div>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--amber)">Dequeue 2</span><br>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--green)">Enqueue 3, 4</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:0">
+          <span style="font-size:0.68rem;color:var(--muted);margin-right:6px;font-family:'JetBrains Mono',monospace">FRONT→</span>
+          <div class="queue-cell head" style="width:40px;height:40px;border-radius:6px 0 0 6px">5</div>
+          <div class="queue-cell enq"  style="width:40px;height:40px;border-radius:0">3</div>
+          <div class="queue-cell enq"  style="width:40px;height:40px;border-radius:0 6px 6px 0">4</div>
+          <span style="font-size:0.68rem;color:var(--muted);margin-left:6px;font-family:'JetBrains Mono',monospace">←BACK</span>
+        </div>
+        <svg viewBox="0 0 260 130" width="260" height="130" style="flex-shrink:0">
+          <line x1="40" y1="65" x2="100" y2="25" stroke="#3fb950" stroke-width="2.5"/>
+          <line x1="40" y1="65" x2="160" y2="65" stroke="#3fb950" stroke-width="2.5"/>
+          <line x1="40" y1="65" x2="40" y2="105" stroke="#3fb950" stroke-width="2.5"/>
+          <line x1="100" y1="25" x2="160" y2="65" stroke="#30363d" stroke-width="1.5"/>
+          <line x1="160" y1="65" x2="220" y2="25" stroke="#3fb950" stroke-width="2.5"/>
+          <line x1="160" y1="65" x2="220" y2="105" stroke="#3fb950" stroke-width="2.5"/>
+          <line x1="220" y1="25" x2="220" y2="105" stroke="#30363d" stroke-width="1.5"/>
+          <line x1="220" y1="25" x2="40" y2="105" stroke="#30363d" stroke-width="1.5"/>
+          <circle cx="40"  cy="65"  r="20" fill="rgba(63,185,80,0.15)"  stroke="#3fb950" stroke-width="2"/>
+          <text x="40"  y="70"  text-anchor="middle" fill="#3fb950"  font-family="JetBrains Mono" font-size="12">0</text>
+          <circle cx="100" cy="25"  r="20" fill="rgba(63,185,80,0.15)"  stroke="#3fb950" stroke-width="2"/>
+          <text x="100" y="30"  text-anchor="middle" fill="#3fb950"  font-family="JetBrains Mono" font-size="12">1</text>
+          <circle cx="160" cy="65"  r="20" fill="rgba(63,185,80,0.15)"  stroke="#3fb950" stroke-width="2"/>
+          <text x="160" y="70"  text-anchor="middle" fill="#3fb950"  font-family="JetBrains Mono" font-size="12">2</text>
+          <circle cx="220" cy="25"  r="20" fill="rgba(240,168,48,0.15)" stroke="#f0a830" stroke-width="2"/>
+          <text x="220" y="30"  text-anchor="middle" fill="#f0a830" font-family="JetBrains Mono" font-size="12">3</text>
+          <circle cx="220" cy="105" r="20" fill="rgba(240,168,48,0.15)" stroke="#f0a830" stroke-width="2"/>
+          <text x="220" y="110" text-anchor="middle" fill="#f0a830" font-family="JetBrains Mono" font-size="12">4</text>
+          <circle cx="40"  cy="105" r="20" fill="rgba(240,168,48,0.15)" stroke="#f0a830" stroke-width="2"/>
+          <text x="40"  y="110" text-anchor="middle" fill="#f0a830" font-family="JetBrains Mono" font-size="12">5</text>
+        </svg>
+      </div>
+
+      <!-- Step 4: Dequeue 5,3,4 → done -->
+      <div style="display:grid;grid-template-columns:200px 220px 1fr;align-items:center;gap:0;background:rgba(167,139,250,0.04);border:1px solid rgba(167,139,250,0.2);border-radius:0.5rem;padding:0.6rem 0.75rem">
+        <div>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--violet)">Dequeue 5, 3, 4</span><br>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--violet)">Nothing new → BFS done!</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:0">
+          <span style="font-size:0.68rem;color:var(--muted);margin-right:6px;font-family:'JetBrains Mono',monospace">FRONT→</span>
+          <div class="queue-cell" style="width:80px;height:40px;border-radius:6px;border-color:var(--muted);color:var(--muted);font-size:0.72rem">[ empty ]</div>
+          <span style="font-size:0.68rem;color:var(--muted);margin-left:6px;font-family:'JetBrains Mono',monospace">←BACK</span>
+        </div>
+        <svg viewBox="0 0 260 130" width="260" height="130" style="flex-shrink:0">
+          <line x1="40" y1="65" x2="100" y2="25" stroke="#3fb950" stroke-width="2.5"/>
+          <line x1="40" y1="65" x2="160" y2="65" stroke="#3fb950" stroke-width="2.5"/>
+          <line x1="40" y1="65" x2="40" y2="105" stroke="#3fb950" stroke-width="2.5"/>
+          <line x1="100" y1="25" x2="160" y2="65" stroke="#30363d" stroke-width="1.5"/>
+          <line x1="160" y1="65" x2="220" y2="25" stroke="#3fb950" stroke-width="2.5"/>
+          <line x1="160" y1="65" x2="220" y2="105" stroke="#3fb950" stroke-width="2.5"/>
+          <line x1="220" y1="25" x2="220" y2="105" stroke="#30363d" stroke-width="1.5"/>
+          <line x1="220" y1="25" x2="40" y2="105" stroke="#30363d" stroke-width="1.5"/>
+          <circle cx="40"  cy="65"  r="20" fill="rgba(63,185,80,0.15)"  stroke="#3fb950" stroke-width="2"/>
+          <text x="40"  y="70"  text-anchor="middle" fill="#3fb950"  font-family="JetBrains Mono" font-size="12">0</text>
+          <circle cx="100" cy="25"  r="20" fill="rgba(63,185,80,0.15)"  stroke="#3fb950" stroke-width="2"/>
+          <text x="100" y="30"  text-anchor="middle" fill="#3fb950"  font-family="JetBrains Mono" font-size="12">1</text>
+          <circle cx="160" cy="65"  r="20" fill="rgba(63,185,80,0.15)"  stroke="#3fb950" stroke-width="2"/>
+          <text x="160" y="70"  text-anchor="middle" fill="#3fb950"  font-family="JetBrains Mono" font-size="12">2</text>
+          <circle cx="220" cy="25"  r="20" fill="rgba(63,185,80,0.15)"  stroke="#3fb950" stroke-width="2"/>
+          <text x="220" y="30"  text-anchor="middle" fill="#3fb950"  font-family="JetBrains Mono" font-size="12">3</text>
+          <circle cx="220" cy="105" r="20" fill="rgba(63,185,80,0.15)"  stroke="#3fb950" stroke-width="2"/>
+          <text x="220" y="110" text-anchor="middle" fill="#3fb950"  font-family="JetBrains Mono" font-size="12">4</text>
+          <circle cx="40"  cy="105" r="20" fill="rgba(63,185,80,0.15)"  stroke="#3fb950" stroke-width="2"/>
+          <text x="40"  y="110" text-anchor="middle" fill="#3fb950"  font-family="JetBrains Mono" font-size="12">5</text>
+          <text x="130" y="122" text-anchor="middle" fill="#3fb950" font-family="Nunito" font-size="10" font-weight="700">All 6 vertices visited! ✓</text>
+        </svg>
+      </div>
+
+    </div><!-- end steps -->
+  </div>
+
+  <div class="callout green scroll-reveal">
+    <span class="callout-label">Key Observation</span>
+    <p>Notice that vertices 1, 2, 5 (all distance-1 from 0) were all dequeued before vertices 3, 4 (distance-2). The FIFO property of the queue guarantees this. A stack would have immediately dived deep into one branch, abandoning the others.</p>
+  </div>
+</div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     §3 ALGORITHM
+══════════════════════════════════════════════════════════ -->
+<section id="sec-algorithm">
+<div class="container">
+  <span class="section-num">SECTION 03</span>
+  <h2 class="section-title">The BFS Algorithm</h2>
+
+  <p>BFS is surprisingly simple to implement once you understand the queue. The pseudocode is only a handful of lines, yet it encodes all the power of level-by-level traversal.</p>
+
+  <h3>Pseudocode</h3>
+  <div class="code-block scroll-reveal">
+    <div class="code-header">
+      <div class="code-dot red"></div><div class="code-dot yellow"></div><div class="code-dot green"></div>
+      <span class="code-lang">Pseudocode</span>
+    </div>
+    <pre>BFS(Graph G, vertex s):
+    Create queue Q
+    Mark s as visited
+    Enqueue s into Q
+
+    while Q is not empty:
+        v ← Dequeue from Q           // take front vertex
+
+        for each neighbor w of v:
+            if w is not yet visited:
+                Mark w as visited    // mark BEFORE enqueuing!
+                edgeTo[w] ← v        // remember we came from v
+                distTo[w] ← distTo[v] + 1
+                Enqueue w into Q</pre>
+  </div>
+
+  <div class="callout amber scroll-reveal">
+    <span class="callout-label">Critical Detail: Mark Before Enqueue</span>
+    <p>We mark <span class="inline-mono">visited[w] = true</span> <em>at the moment we enqueue w</em>, not when we dequeue it. If we waited until dequeue, the same vertex could be enqueued multiple times by different neighbors, wasting time. Mark early to prevent duplicates.</p>
+    <p style="margin-top:0.75rem">This is the opposite of naïve thinking ("mark when you process it") — it's mark when you <em>discover</em> it.</p>
+  </div>
+
+  <h3>Full BFS — Annotated Pseudocode</h3>
+  <div class="code-block scroll-reveal">
+    <div class="code-header">
+      <div class="code-dot red"></div><div class="code-dot yellow"></div><div class="code-dot green"></div>
+      <span class="code-lang">Pseudocode · Core BFS</span>
+    </div>
+    <pre><span class="cm">─────────────────────────────────────────────────────────────────
+ BFS from source s on graph G
+ After this runs:
+   marked[v] = true   if v is reachable from s
+   edgeTo[v] = u      means "we first reached v by coming from u"
+   distTo[v] = k      means "shortest path from s to v has k edges"
+
+ Time:  O(V + E)  — every vertex enqueued/dequeued exactly once
+                    every edge examined at most twice
+ Space: O(V)      — for marked[], edgeTo[], distTo[], and the queue
+─────────────────────────────────────────────────────────────────</span>
+
+<span class="fn">BFS</span>(Graph G, vertex s):
+
+    <span class="cm">── Setup: allocate arrays, all vertices start "unvisited" ──</span>
+    marked[0..V-1]  ← all false          <span class="cm">// has this vertex been discovered?</span>
+    edgeTo[0..V-1]  ← all -1            <span class="cm">// parent pointer (builds BFS tree)</span>
+    distTo[0..V-1]  ← all ∞             <span class="cm">// shortest distance from s (unknown)</span>
+
+    <span class="cm">── Phase 1: seed the queue with the source ──</span>
+    marked[s] ← true                    <span class="cm">// s is trivially reachable</span>
+    distTo[s] ← 0                       <span class="cm">// zero edges from s to itself</span>
+    Q ← empty queue
+    enqueue s into Q                    <span class="cm">// kick things off</span>
+
+    <span class="cm">── Phase 2: expand outward, level by level ──</span>
+    <span class="kw">while</span> Q is not empty:
+
+        v ← dequeue from front of Q    <span class="cm">// oldest undiscovered vertex</span>
+
+        <span class="kw">for each</span> neighbor w <span class="kw">of</span> v:     <span class="cm">// scan v's adjacency list</span>
+
+            <span class="kw">if</span> marked[w] = false:      <span class="cm">// w not yet seen?</span>
+                marked[w] ← true       <span class="cm">// ← claim w NOW, before enqueue</span>
+                edgeTo[w] ← v          <span class="cm">// v is w's parent in BFS tree</span>
+                distTo[w] ← distTo[v] + 1   <span class="cm">// one hop further than v</span>
+                enqueue w into Q       <span class="cm">// schedule w for later processing</span>
+
+            <span class="cm">// if marked[w] = true: w was already found at equal or
+            //   shorter distance — this edge is a cross edge, ignore it</span>
+
+    <span class="cm">// loop ends when Q is empty = all reachable vertices visited</span>
+    <span class="cm">// at this point distTo[v] holds the TRUE shortest distance for every v</span></pre>
+  </div>
+
+  <h3>The BreadthFirstPaths Pattern</h3>
+  <p>Recall how <span class="inline-mono">DepthFirstPaths</span> followed a constructor-query pattern: run DFS once in the constructor, then answer path queries in O(1) or O(path length). We do the exact same thing with BFS — but now the paths we find are <em>guaranteed shortest</em>.</p>
+
+  <div class="code-block scroll-reveal">
+    <div class="code-header">
+      <div class="code-dot red"></div><div class="code-dot yellow"></div><div class="code-dot green"></div>
+      <span class="code-lang">Pseudocode · BreadthFirstPaths — Constructor + Query Methods</span>
+    </div>
+    <pre><span class="cm">─────────────────────────────────────────────────────────────────
+ BreadthFirstPaths: run BFS once, then answer queries in O(1)
+ Same constructor-query pattern as DepthFirstPaths from Lecture 09
+─────────────────────────────────────────────────────────────────</span>
+
+<span class="kw">class</span> <span class="ty">BreadthFirstPaths</span>:
+
+    <span class="cm">── Instance variables (allocated once, queried many times) ──</span>
+    marked[0..V-1]   <span class="cm">// marked[v] = true if v is reachable from source s</span>
+    edgeTo[0..V-1]   <span class="cm">// edgeTo[v] = parent of v in the BFS shortest-path tree</span>
+    distTo[0..V-1]   <span class="cm">// distTo[v] = exact # of edges on shortest path s → v</span>
+    source           <span class="cm">// the starting vertex s</span>
+
+    <span class="cm">── Constructor — O(V + E) one-time cost ──</span>
+    <span class="fn">BreadthFirstPaths</span>(Graph G, vertex s):
+        source ← s
+        marked ← all false
+        edgeTo ← all -1 (no parent)
+        distTo ← all ∞  (not yet reached)
+
+        <span class="fn">runBFS</span>(G, s)            <span class="cm">// fills marked[], edgeTo[], distTo[]</span>
+
+    <span class="cm">── Private helper — the actual BFS ──</span>
+    <span class="fn">runBFS</span>(Graph G, vertex src):
+        marked[src] ← true
+        distTo[src] ← 0
+        Q ← new empty queue
+        enqueue src into Q
+
+        <span class="kw">while</span> Q is not empty:
+            v ← dequeue from front of Q
+            <span class="kw">for each</span> neighbor w <span class="kw">of</span> v:
+                <span class="kw">if</span> marked[w] = false:
+                    edgeTo[w] ← v
+                    distTo[w] ← distTo[v] + 1
+                    marked[w] ← true       <span class="cm">// mark before enqueue!</span>
+                    enqueue w into Q
+
+    <span class="cm">── Public query methods — all run in O(1) or O(path length) ──</span>
+
+    <span class="fn">hasPathTo</span>(vertex v) → boolean:          <span class="cm">// O(1)</span>
+        return marked[v]
+
+    <span class="fn">distanceTo</span>(vertex v) → integer:         <span class="cm">// O(1) — exact shortest distance</span>
+        return distTo[v]                    <span class="cm">// ∞ if v is unreachable</span>
+
+    <span class="fn">pathTo</span>(vertex v) → sequence of vertices: <span class="cm">// O(path length)</span>
+        <span class="kw">if</span> hasPathTo(v) = false: return empty
+        path ← empty list
+        x ← v
+        <span class="kw">while</span> x ≠ source:
+            prepend x to path              <span class="cm">// walk backwards through edgeTo[]</span>
+            x ← edgeTo[x]
+        prepend source to path
+        return path                        <span class="cm">// guaranteed SHORTEST path s → v</span></pre>
+  </div>
+</div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     §4 SHORTEST PATHS
+══════════════════════════════════════════════════════════ -->
+<section id="sec-shortest">
+<div class="container">
+  <span class="section-num">SECTION 04</span>
+  <h2 class="section-title">Why BFS Finds Shortest Paths</h2>
+
+  <p>This is the most important theorem in BFS — and it's worth proving carefully, because the proof is simple and beautiful.</p>
+
+  <div class="callout violet scroll-reveal">
+    <span class="callout-label">Theorem</span>
+    <p>For any vertex v reachable from s, <span class="inline-mono">distTo[v]</span> computed by BFS equals the true shortest-path distance from s to v (measured in number of edges).</p>
+  </div>
+
+  <h3>The Proof Sketch</h3>
+  <p>We prove by induction that BFS visits vertices in non-decreasing order of their true shortest distance.</p>
+
+  <p><strong>Base case:</strong> The source s is enqueued first with <span class="inline-mono">distTo[s] = 0</span>. That's correct — the shortest path from s to itself is 0 edges.</p>
+
+  <p><strong>Inductive step:</strong> Suppose all vertices at distance ≤ k have been correctly processed and are already fully dequeued. The queue now contains exactly the vertices at distance k+1 (enqueued while processing distance-k vertices). When we dequeue a distance-(k+1) vertex v and look at its unvisited neighbor w, we record <span class="inline-mono">distTo[w] = distTo[v] + 1 = (k+1) + 1 = k+2</span>. Why is k+2 optimal? Because to reach w you must enter through some vertex at distance ≤ k+1; any path using a vertex at distance &lt; k+1 would have already discovered w earlier. Therefore w truly has shortest distance k+2, and the queue (FIFO) guarantees all k+1 vertices finish before we start on k+2. ∎</p>
+
+  <div class="callout coral scroll-reveal">
+    <span class="callout-label">⚠️ Unweighted Graphs Only</span>
+    <p>BFS finds shortest paths only when all edges have the same cost (or equivalently, we measure "number of edges"). For graphs with varying edge weights, BFS is not correct — you need <strong>Dijkstra's algorithm</strong> (covered in Lecture 11). The FIFO queue assumes each edge costs 1; Dijkstra's priority queue accounts for different costs.</p>
+    <p style="margin-top:0.75rem;font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--muted)">Rule: BFS = "fewest hops"  |  Dijkstra's = "lowest total weight"</p>
+  </div>
+
+  <h3>Levels = Distances</h3>
+  <p>The "levels" we saw in the ripple diagram are exactly the BFS distance layers. Every vertex that BFS enqueues during the processing of level-k vertices gets distance k+1. The level structure is a direct consequence of the queue's FIFO ordering.</p>
+
+  <div class="level-band scroll-reveal">
+    <div class="level-col lv0">
+      <span class="lnum">dist = 0</span>
+      <p>Source vertex only. Enqueued at initialization.</p>
+    </div>
+    <div class="level-col lv1">
+      <span class="lnum">dist = 1</span>
+      <p>Direct neighbors of source. Enqueued while processing dist=0.</p>
+    </div>
+    <div class="level-col lv2">
+      <span class="lnum">dist = 2</span>
+      <p>Neighbors of dist=1 vertices (not yet seen). Enqueued while processing dist=1.</p>
+    </div>
+    <div class="level-col lv3">
+      <span class="lnum">dist = k</span>
+      <p>Newly discovered neighbors of dist=(k−1) vertices. Each level fully processes before the next.</p>
+    </div>
+  </div>
+
+  <h3>Path Reconstruction — Same Trick as DFS</h3>
+  <p>Just like DFS, BFS fills in an <span class="inline-mono">edgeTo[]</span> array — a parent-link tree. To find the shortest path from s to any vertex v, trace backwards through <span class="inline-mono">edgeTo[]</span> from v to s, then reverse.</p>
+
+  <div class="graph-display scroll-reveal">
+    <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1rem">Shortest path from 0 to 5 — follow edgeTo[] arrows backward: 5←3←2←0 → reverse → 0→2→3→5</p>
+    <svg viewBox="0 0 700 248" width="700" height="248">
+      <!-- All edges -->
+      <line x1="100" y1="120" x2="200" y2="60"  stroke="#30363d" stroke-width="1.5"/>
+      <line x1="100" y1="120" x2="290" y2="120" stroke="#30363d" stroke-width="1.5"/>
+      <line x1="100" y1="120" x2="200" y2="180" stroke="#30363d" stroke-width="1.5"/>
+      <line x1="200" y1="60"  x2="290" y2="120" stroke="#30363d" stroke-width="1.5"/>
+      <line x1="290" y1="120" x2="380" y2="60"  stroke="#30363d" stroke-width="1.5"/>
+      <line x1="290" y1="120" x2="380" y2="180" stroke="#30363d" stroke-width="1.5"/>
+      <line x1="200" y1="180" x2="380" y2="60"  stroke="#30363d" stroke-width="1.5"/>
+      <line x1="380" y1="60"  x2="490" y2="120" stroke="#30363d" stroke-width="1.5"/>
+      <line x1="380" y1="180" x2="490" y2="120" stroke="#30363d" stroke-width="1.5"/>
+
+      <!-- SHORTEST PATH 0→2→3→5 (highlighted) -->
+      <line x1="100" y1="120" x2="290" y2="120" stroke="#39d0d8" stroke-width="4" opacity="0.85"/>
+      <line x1="290" y1="120" x2="380" y2="60"  stroke="#39d0d8" stroke-width="4" opacity="0.85"/>
+      <line x1="380" y1="60"  x2="490" y2="120" stroke="#39d0d8" stroke-width="4" opacity="0.85"/>
+
+      <!-- Nodes -->
+      <circle cx="100" cy="120" r="28" fill="rgba(57,208,216,0.2)" stroke="#39d0d8" stroke-width="2.5"/>
+      <text x="100" y="115" text-anchor="middle" fill="#39d0d8" font-family="JetBrains Mono" font-size="14">0</text>
+      <text x="100" y="131" text-anchor="middle" fill="#39d0d8" font-family="Nunito" font-size="9">source</text>
+
+      <circle cx="200" cy="60"  r="26" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+      <text x="200" y="65" text-anchor="middle" fill="#8b949e" font-family="JetBrains Mono" font-size="14">1</text>
+
+      <circle cx="290" cy="120" r="28" fill="rgba(57,208,216,0.15)" stroke="#39d0d8" stroke-width="2.5"/>
+      <text x="290" y="125" text-anchor="middle" fill="#39d0d8" font-family="JetBrains Mono" font-size="14">2</text>
+
+      <circle cx="380" cy="60"  r="28" fill="rgba(57,208,216,0.15)" stroke="#39d0d8" stroke-width="2.5"/>
+      <text x="380" y="65" text-anchor="middle" fill="#39d0d8" font-family="JetBrains Mono" font-size="14">3</text>
+
+      <circle cx="380" cy="180" r="26" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+      <text x="380" y="185" text-anchor="middle" fill="#8b949e" font-family="JetBrains Mono" font-size="14">4</text>
+
+      <circle cx="490" cy="120" r="28" fill="rgba(255,107,107,0.2)" stroke="#ff6b6b" stroke-width="2.5"/>
+      <text x="490" y="115" text-anchor="middle" fill="#ff6b6b" font-family="JetBrains Mono" font-size="14">5</text>
+      <text x="490" y="131" text-anchor="middle" fill="#ff6b6b" font-family="Nunito" font-size="9">target</text>
+
+      <!-- edgeTo labels -->
+      <text x="196" y="130" text-anchor="middle" fill="#6a737d" font-family="JetBrains Mono" font-size="9">edgeTo[2]=0</text>
+      <text x="338" y="75"  text-anchor="middle" fill="#6a737d" font-family="JetBrains Mono" font-size="9">edgeTo[3]=2</text>
+      <text x="440" y="75"  text-anchor="middle" fill="#6a737d" font-family="JetBrains Mono" font-size="9">edgeTo[5]=3</text>
+
+      <text x="350" y="218" text-anchor="middle" fill="#39d0d8" font-family="Nunito" font-size="12">Path: 0 → 2 → 3 → 5 &nbsp;(length 3) &nbsp;·&nbsp; BFS guarantees this is SHORTEST</text>
+    </svg>
+  </div>
+</div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     §5 LIVE TRACE
+══════════════════════════════════════════════════════════ -->
+<section id="sec-trace">
+<div class="container">
+  <span class="section-num">SECTION 05</span>
+  <h2 class="section-title">Interactive BFS Trace</h2>
+  <p>Step through a complete BFS execution on the same 6-vertex graph from Lecture 09. Watch the queue evolve, observe how vertices are marked in level order, and compare the result with DFS from the previous lecture.</p>
+
+  <div class="trace-box scroll-reveal">
+    <div class="trace-header">
+      <div class="trace-title">BFS from vertex <span style="color:var(--teal)">0</span></div>
+      <div class="trace-controls">
+        <button class="btn" onclick="bfsReset()">↺ Reset</button>
+        <button class="btn primary" id="bfsNextBtn" onclick="bfsNext()">Next Step →</button>
+      </div>
+    </div>
+
+    <!-- Two-column: [graph+queue] | [log] -->
+    <div class="trace-body" style="align-items:stretch">
+
+      <!-- LEFT COLUMN: graph + queue bar + state arrays -->
+      <div style="display:flex;flex-direction:column;border-right:1px solid var(--border)">
+
+        <!-- Graph SVG — expanded with dist labels and action tooltip -->
+        <div style="padding:1.25rem 1.25rem 0.5rem;flex-shrink:0">
+          <svg id="bfsSVG" viewBox="0 0 380 310" width="100%" style="max-width:380px;display:block;margin:0 auto">
+
+            <!-- Edges -->
+            <line id="be01" x1="70"  y1="155" x2="165" y2="55"  stroke="#30363d" stroke-width="2"/>
+            <line id="be02" x1="70"  y1="155" x2="265" y2="155" stroke="#30363d" stroke-width="2"/>
+            <line id="be05" x1="70"  y1="155" x2="70"  y2="255" stroke="#30363d" stroke-width="2"/>
+            <line id="be12" x1="165" y1="55"  x2="265" y2="155" stroke="#30363d" stroke-width="2"/>
+            <line id="be23" x1="265" y1="155" x2="345" y2="55"  stroke="#30363d" stroke-width="2"/>
+            <line id="be24" x1="265" y1="155" x2="345" y2="255" stroke="#30363d" stroke-width="2"/>
+            <line id="be34" x1="345" y1="55"  x2="345" y2="255" stroke="#30363d" stroke-width="2"/>
+            <line id="be35" x1="345" y1="55"  x2="70"  y2="255" stroke="#30363d" stroke-width="2"/>
+
+            <!-- Action tooltip (floats near active node) -->
+            <g id="bfsTooltipGroup" visibility="hidden">
+              <rect id="bfsTooltipBg" rx="5" ry="5" fill="rgba(13,17,23,0.92)" stroke="#39d0d8" stroke-width="1"/>
+              <text id="bfsTooltipText" fill="#39d0d8" font-family="JetBrains Mono" font-size="9.5" text-anchor="middle"></text>
+            </g>
+
+            <!-- Vertex 0 — left middle -->
+            <circle id="bc0" cx="70"  cy="155" r="28" fill="#161b22" stroke="#30363d" stroke-width="2"/>
+            <text   id="bt0" x="70"   y="151"  text-anchor="middle" fill="#8b949e" font-family="JetBrains Mono" font-size="13" font-weight="600">0</text>
+            <text   id="bd0" x="70"   y="166"  text-anchor="middle" fill="#444c56" font-family="JetBrains Mono" font-size="8">d=?</text>
+
+            <!-- Vertex 1 — upper middle -->
+            <circle id="bc1" cx="165" cy="55"  r="28" fill="#161b22" stroke="#30363d" stroke-width="2"/>
+            <text   id="bt1" x="165"  y="51"   text-anchor="middle" fill="#8b949e" font-family="JetBrains Mono" font-size="13" font-weight="600">1</text>
+            <text   id="bd1" x="165"  y="66"   text-anchor="middle" fill="#444c56" font-family="JetBrains Mono" font-size="8">d=?</text>
+
+            <!-- Vertex 2 — right middle -->
+            <circle id="bc2" cx="265" cy="155" r="28" fill="#161b22" stroke="#30363d" stroke-width="2"/>
+            <text   id="bt2" x="265"  y="151"  text-anchor="middle" fill="#8b949e" font-family="JetBrains Mono" font-size="13" font-weight="600">2</text>
+            <text   id="bd2" x="265"  y="166"  text-anchor="middle" fill="#444c56" font-family="JetBrains Mono" font-size="8">d=?</text>
+
+            <!-- Vertex 3 — upper right -->
+            <circle id="bc3" cx="345" cy="55"  r="28" fill="#161b22" stroke="#30363d" stroke-width="2"/>
+            <text   id="bt3" x="345"  y="51"   text-anchor="middle" fill="#8b949e" font-family="JetBrains Mono" font-size="13" font-weight="600">3</text>
+            <text   id="bd3" x="345"  y="66"   text-anchor="middle" fill="#444c56" font-family="JetBrains Mono" font-size="8">d=?</text>
+
+            <!-- Vertex 4 — lower right -->
+            <circle id="bc4" cx="345" cy="255" r="28" fill="#161b22" stroke="#30363d" stroke-width="2"/>
+            <text   id="bt4" x="345"  y="251"  text-anchor="middle" fill="#8b949e" font-family="JetBrains Mono" font-size="13" font-weight="600">4</text>
+            <text   id="bd4" x="345"  y="266"  text-anchor="middle" fill="#444c56" font-family="JetBrains Mono" font-size="8">d=?</text>
+
+            <!-- Vertex 5 — lower left -->
+            <circle id="bc5" cx="70"  cy="255" r="28" fill="#161b22" stroke="#30363d" stroke-width="2"/>
+            <text   id="bt5" x="70"   y="251"  text-anchor="middle" fill="#8b949e" font-family="JetBrains Mono" font-size="13" font-weight="600">5</text>
+            <text   id="bd5" x="70"   y="266"  text-anchor="middle" fill="#444c56" font-family="JetBrains Mono" font-size="8">d=?</text>
+
+          </svg>
+        </div>
+
+        <!-- ─── QUEUE BAR docked directly below graph ─── -->
+        <div style="padding:0 1.25rem 1rem;flex-shrink:0">
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:0.65rem;padding:0.75rem 1rem">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase">Queue</span>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--muted)">← dequeue (FRONT) &nbsp; | &nbsp; enqueue (BACK) →</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:0;min-height:48px">
+              <!-- Arrow showing dequeue direction -->
+              <div style="display:flex;flex-direction:column;align-items:center;margin-right:8px;flex-shrink:0">
+                <span style="font-size:1.1rem;color:var(--teal);line-height:1">⟵</span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:0.58rem;color:var(--teal)">out</span>
+              </div>
+              <!-- Queue cells -->
+              <div id="bfsQueue" style="display:flex;align-items:center;gap:0;flex:1">
+                <span style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:#444c56;padding:0 0.5rem">[ empty ]</span>
+              </div>
+              <!-- Arrow showing enqueue direction -->
+              <div style="display:flex;flex-direction:column;align-items:center;margin-left:8px;flex-shrink:0">
+                <span style="font-size:1.1rem;color:var(--amber);line-height:1">⟵</span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:0.58rem;color:var(--amber)">in</span>
+              </div>
+            </div>
+
+            <!-- Operation indicator line -->
+            <div id="bfsOpBadge" style="margin-top:0.5rem;min-height:1.4rem;font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--muted);text-align:center">
+              Press Next Step to begin
+            </div>
+          </div>
+        </div>
+
+        <!-- ─── STATE ARRAYS below queue ─── -->
+        <div style="padding:0 1.25rem 1.25rem;flex-shrink:0">
+          <div style="display:flex;gap:1rem;flex-wrap:wrap">
+            <!-- marked[] -->
+            <div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--muted);margin-bottom:4px;letter-spacing:0.08em;text-transform:uppercase">marked[]</div>
+              <div style="display:flex;gap:2px">
+                <div class="state-cell" id="bm0" title="marked[0]">0</div>
+                <div class="state-cell" id="bm1" title="marked[1]">1</div>
+                <div class="state-cell" id="bm2" title="marked[2]">2</div>
+                <div class="state-cell" id="bm3" title="marked[3]">3</div>
+                <div class="state-cell" id="bm4" title="marked[4]">4</div>
+                <div class="state-cell" id="bm5" title="marked[5]">5</div>
+              </div>
+            </div>
+            <!-- distTo[] -->
+            <div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--muted);margin-bottom:4px;letter-spacing:0.08em;text-transform:uppercase">distTo[]</div>
+              <div style="display:flex;gap:2px">
+                <div class="state-cell" id="bd_c0" title="distTo[0]">∞</div>
+                <div class="state-cell" id="bd_c1" title="distTo[1]">∞</div>
+                <div class="state-cell" id="bd_c2" title="distTo[2]">∞</div>
+                <div class="state-cell" id="bd_c3" title="distTo[3]">∞</div>
+                <div class="state-cell" id="bd_c4" title="distTo[4]">∞</div>
+                <div class="state-cell" id="bd_c5" title="distTo[5]">∞</div>
+              </div>
+            </div>
+            <!-- Visit order -->
+            <div style="flex:1;min-width:160px">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--muted);margin-bottom:4px;letter-spacing:0.08em;text-transform:uppercase">Visit order</div>
+              <div id="bfsOrder" style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--teal);line-height:36px">—</div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- end left column -->
+
+      <!-- RIGHT COLUMN: scrollable log -->
+      <div class="trace-log" id="bfsLog">
+        <div class="trace-step active">🚀 Press "Next Step" to begin BFS from vertex 0.</div>
+      </div>
+
+    </div><!-- end trace-body -->
+  </div>
+
+  <div class="callout scroll-reveal">
+    <span class="callout-label">Compare with DFS (Lecture 09)</span>
+    <p>DFS on this same graph (starting from 0) visits in order: <span class="inline-mono">0 → 1 → 2 → 3 → 4 → 5</span> — diving deep immediately into the 0-1-2-3-4 chain before backtracking to 5. BFS visits: <span class="inline-mono">0 → 1 → 2 → 5 → 3 → 4</span> — processing all of 0's neighbors (1, 2, 5) first, then the next level. BFS finds dist(0,5) = 1; DFS finds the non-shortest path 0→1→2→3→5 of length 4.</p>
+  </div>
+</div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     §6 APPLICATIONS
+══════════════════════════════════════════════════════════ -->
+<section id="sec-apps">
+<div class="container">
+  <span class="section-num">SECTION 06</span>
+  <h2 class="section-title">What BFS Can Do</h2>
+
+  <p>Like DFS, BFS follows the constructor-query pattern: a single O(V+E) pass fills in <span class="inline-mono">marked[]</span>, <span class="inline-mono">edgeTo[]</span>, and <span class="inline-mono">distTo[]</span>. Different algorithms simply use that data differently.</p>
+
+  <!-- ── SHORTEST PATHS ── -->
+  <h3>Application 1: Shortest Path Queries</h3>
+  <p>This is BFS's flagship use. After one BFS from source s, you can answer "what is the shortest path from s to v?" for <em>any</em> v in O(path length) time, using the <span class="inline-mono">edgeTo[]</span> parent-link tree. Distance queries cost O(1) via <span class="inline-mono">distTo[]</span>.</p>
+
+  <div class="callout green scroll-reveal">
+    <span class="callout-label">Real-World: Six Degrees of Kevin Bacon</span>
+    <p>Model every actor as a vertex. Add an edge between two actors if they appeared in the same film. BFS from "Kevin Bacon" fills in <span class="inline-mono">distTo[actor]</span> for every person in Hollywood. Each person's "Bacon number" is exactly <span class="inline-mono">distTo[that_actor]</span>. A single BFS answers everyone's Bacon number simultaneously.</p>
+  </div>
+
+  <!-- ── BIPARTITE ── -->
+  <h3>Application 2: Bipartite Testing</h3>
+  <p>A graph is <span class="highlight">bipartite</span> if its vertices can be divided into two groups such that every edge connects a vertex in group A to a vertex in group B — never within the same group. Think of a job marketplace graph: companies on one side, applicants on the other.</p>
+
+  <p>A graph is bipartite <em>if and only if</em> it contains no odd-length cycles. BFS provides a clean O(V+E) test: try to 2-color the graph as BFS runs. Color the source "red". Color all its neighbors "blue". Color their unvisited neighbors "red". If you ever try to color a vertex a color it already has, the graph is <em>not</em> bipartite.</p>
+
+  <div class="graph-display scroll-reveal">
+    <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1rem">Left: bipartite (2-colorable, no odd cycles) &nbsp;·&nbsp; Right: not bipartite (odd cycle 1-2-3-1)</p>
+    <svg viewBox="0 0 700 295" width="700" height="295">
+      <!-- LEFT: bipartite -->
+      <text x="180" y="22" text-anchor="middle" fill="#3fb950" font-family="Nunito" font-size="13" font-weight="700">✓ Bipartite</text>
+      <!-- Edges -->
+      <line x1="100" y1="130" x2="200" y2="70"  stroke="#30363d" stroke-width="2"/>
+      <line x1="100" y1="130" x2="200" y2="130" stroke="#30363d" stroke-width="2"/>
+      <line x1="100" y1="130" x2="200" y2="190" stroke="#30363d" stroke-width="2"/>
+      <line x1="260" y1="100" x2="200" y2="70"  stroke="#30363d" stroke-width="2"/>
+      <line x1="260" y1="100" x2="200" y2="130" stroke="#30363d" stroke-width="2"/>
+      <line x1="260" y1="160" x2="200" y2="130" stroke="#30363d" stroke-width="2"/>
+      <line x1="260" y1="160" x2="200" y2="190" stroke="#30363d" stroke-width="2"/>
+      <!-- Red group -->
+      <circle cx="100" cy="130" r="28" fill="rgba(57,208,216,0.15)" stroke="#39d0d8" stroke-width="2"/>
+      <text x="100" y="125" text-anchor="middle" fill="#39d0d8" font-family="JetBrains Mono" font-size="13">A</text>
+      <text x="100" y="141" text-anchor="middle" fill="#39d0d8" font-family="Nunito" font-size="9">red</text>
+      <circle cx="260" cy="100" r="28" fill="rgba(57,208,216,0.15)" stroke="#39d0d8" stroke-width="2"/>
+      <text x="260" y="95" text-anchor="middle" fill="#39d0d8" font-family="JetBrains Mono" font-size="13">D</text>
+      <text x="260" y="111" text-anchor="middle" fill="#39d0d8" font-family="Nunito" font-size="9">red</text>
+      <circle cx="260" cy="160" r="28" fill="rgba(57,208,216,0.15)" stroke="#39d0d8" stroke-width="2"/>
+      <text x="260" y="155" text-anchor="middle" fill="#39d0d8" font-family="JetBrains Mono" font-size="13">E</text>
+      <text x="260" y="171" text-anchor="middle" fill="#39d0d8" font-family="Nunito" font-size="9">red</text>
+      <!-- Blue group -->
+      <circle cx="200" cy="70"  r="28" fill="rgba(240,168,48,0.15)" stroke="#f0a830" stroke-width="2"/>
+      <text x="200" y="65" text-anchor="middle" fill="#f0a830" font-family="JetBrains Mono" font-size="13">B</text>
+      <text x="200" y="81" text-anchor="middle" fill="#f0a830" font-family="Nunito" font-size="9">blue</text>
+      <circle cx="200" cy="130" r="28" fill="rgba(240,168,48,0.15)" stroke="#f0a830" stroke-width="2"/>
+      <text x="200" y="125" text-anchor="middle" fill="#f0a830" font-family="JetBrains Mono" font-size="13">C</text>
+      <text x="200" y="141" text-anchor="middle" fill="#f0a830" font-family="Nunito" font-size="9">blue</text>
+      <circle cx="200" cy="190" r="28" fill="rgba(240,168,48,0.15)" stroke="#f0a830" stroke-width="2"/>
+      <text x="200" y="185" text-anchor="middle" fill="#f0a830" font-family="JetBrains Mono" font-size="13">F</text>
+      <text x="200" y="201" text-anchor="middle" fill="#f0a830" font-family="Nunito" font-size="9">blue</text>
+      <text x="180" y="250" text-anchor="middle" fill="#6a737d" font-family="Nunito" font-size="11">Every edge crosses the red/blue boundary</text>
+
+      <!-- divider -->
+      <line x1="370" y1="30" x2="370" y2="250" stroke="#30363d" stroke-width="1" stroke-dasharray="6,4"/>
+
+      <!-- RIGHT: not bipartite (triangle = odd cycle) -->
+      <text x="530" y="22" text-anchor="middle" fill="#ff6b6b" font-family="Nunito" font-size="13" font-weight="700">✕ Not Bipartite (odd cycle)</text>
+      <line x1="450" y1="200" x2="530" y2="70"  stroke="#ff6b6b" stroke-width="2"/>
+      <line x1="530" y1="70"  x2="610" y2="200" stroke="#ff6b6b" stroke-width="2"/>
+      <line x1="610" y1="200" x2="450" y2="200" stroke="#ff6b6b" stroke-width="2"/>
+      <circle cx="530" cy="70"  r="28" fill="rgba(57,208,216,0.15)" stroke="#39d0d8" stroke-width="2"/>
+      <text x="530" y="65" text-anchor="middle" fill="#39d0d8" font-family="JetBrains Mono" font-size="13">1</text>
+      <text x="530" y="81" text-anchor="middle" fill="#39d0d8" font-family="Nunito" font-size="9">red</text>
+      <circle cx="450" cy="200" r="28" fill="rgba(240,168,48,0.15)" stroke="#f0a830" stroke-width="2"/>
+      <text x="450" y="195" text-anchor="middle" fill="#f0a830" font-family="JetBrains Mono" font-size="13">2</text>
+      <text x="450" y="211" text-anchor="middle" fill="#f0a830" font-family="Nunito" font-size="9">blue</text>
+      <circle cx="610" cy="200" r="28" fill="rgba(255,107,107,0.3)" stroke="#ff6b6b" stroke-width="2.5"/>
+      <text x="610" y="195" text-anchor="middle" fill="#ff6b6b" font-family="JetBrains Mono" font-size="13">3</text>
+      <text x="610" y="211" text-anchor="middle" fill="#ff6b6b" font-family="Nunito" font-size="9">conflict!</text>
+      <text x="530" y="250" text-anchor="middle" fill="#ff6b6b" font-family="Nunito" font-size="11">3 should be red (≠ neighbor 2) but also blue (≠ neighbor 1) — impossible</text>
+    </svg>
+  </div>
+
+  <div class="code-block scroll-reveal">
+    <div class="code-header">
+      <div class="code-dot red"></div><div class="code-dot yellow"></div><div class="code-dot green"></div>
+      <span class="code-lang">Pseudocode · Bipartite Testing via BFS 2-Coloring</span>
+    </div>
+    <pre><span class="cm">─────────────────────────────────────────────────────────────────
+ Bipartite Test: try to 2-color the graph during BFS
+ Color s "red". All neighbors of s → "blue".
+ All unvisited neighbors of blue vertices → "red". Repeat.
+ If we ever try to assign a vertex the SAME color as its neighbor,
+ we have found an odd cycle — graph is NOT bipartite.
+
+ Time:  O(V + E)   Space: O(V)
+─────────────────────────────────────────────────────────────────</span>
+
+<span class="fn">isBipartite</span>(Graph G) → boolean:
+
+    marked[0..V-1] ← all false
+    color[0..V-1]  ← all NONE          <span class="cm">// RED or BLUE, initially unassigned</span>
+    result         ← true              <span class="cm">// optimistic: assume bipartite</span>
+
+    <span class="cm">── Outer loop handles disconnected graphs ──</span>
+    <span class="kw">for each</span> vertex s <span class="kw">in</span> 0..V-1:
+        <span class="kw">if</span> marked[s] = false:
+            <span class="fn">colorBFS</span>(G, s)             <span class="cm">// BFS from each unvisited component</span>
+
+    return result
+
+<span class="fn">colorBFS</span>(Graph G, vertex s):
+
+    marked[s] ← true
+    color[s]  ← RED                    <span class="cm">// source gets the first color</span>
+    Q ← new empty queue
+    enqueue s into Q
+
+    <span class="kw">while</span> Q is not empty <span class="kw">and</span> result = true:
+
+        v ← dequeue from front of Q
+
+        <span class="kw">for each</span> neighbor w <span class="kw">of</span> v:
+
+            <span class="kw">if</span> marked[w] = false:
+                marked[w] ← true
+                color[w]  ← opposite(color[v])  <span class="cm">// flip: RED→BLUE, BLUE→RED</span>
+                enqueue w into Q
+
+            <span class="kw">else if</span> color[w] = color[v]:         <span class="cm">// same color as neighbor!</span>
+                result ← false                   <span class="cm">// odd cycle found → not bipartite</span>
+                return                           <span class="cm">// short-circuit, no need to continue</span>
+
+<span class="cm">── Helper ──</span>
+<span class="fn">opposite</span>(color c):
+    <span class="kw">if</span> c = RED  → return BLUE
+    <span class="kw">if</span> c = BLUE → return RED</pre>
+  </div>
+</div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     §7 EDGE TYPES
+══════════════════════════════════════════════════════════ -->
+<section id="sec-edges">
+<div class="container">
+  <span class="section-num">SECTION 07</span>
+  <h2 class="section-title">Edge Classification in BFS</h2>
+
+  <p>Just as DFS classifies edges into tree edges and back edges, BFS produces its own classification. The key difference: BFS has no "back edges" in the DFS sense. All non-tree edges in BFS connect vertices that are at most one level apart.</p>
+
+  <div class="card-grid scroll-reveal">
+    <div class="card">
+      <h4><span class="edge-badge tree">TREE EDGE</span></h4>
+      <p>An edge <strong>{v, w}</strong> where BFS discovers w for the first time while processing v. These are recorded in <span class="inline-mono">edgeTo[]</span> and form the <strong>BFS tree</strong>. They always connect a vertex at distance d to one at distance d+1.</p>
+    </div>
+    <div class="card">
+      <h4><span class="edge-badge cross">CROSS EDGE</span></h4>
+      <p>An edge <strong>{v, w}</strong> where w is already marked when BFS processes v. Unlike DFS back edges (which span many levels), BFS cross edges always connect vertices at the same level or adjacent levels — <em>never</em> more than 1 apart. This is why BFS distances are optimal.</p>
+    </div>
+  </div>
+
+  <div class="callout amber scroll-reveal">
+    <span class="callout-label">Why Cross Edges Can't Span Many Levels</span>
+    <p>If edge {v, w} existed with distTo[v] = k and distTo[w] = k+2, then w would have been discovered while processing v as a shorter path of length k+1. But the queue's FIFO ordering ensures all distance-k vertices are processed before distance-(k+1) vertices — so w <em>can't</em> have distance k+2 if it's adjacent to a distance-k vertex. The queue literally prevents long cross-edges from ever forming.</p>
+  </div>
+
+  <div class="graph-display scroll-reveal">
+    <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1rem">BFS tree from vertex 0 — tree edges in amber, cross edges in violet (same or adjacent level)</p>
+    <svg viewBox="0 0 700 340" width="700" height="340">
+      <text x="350" y="22" text-anchor="middle" fill="#8b949e" font-family="Nunito" font-size="13">BFS from vertex 0 — compare with DFS tree which had back edges spanning many levels</text>
+
+      <!-- Level lines -->
+      <line x1="40" y1="80"  x2="660" y2="80"  stroke="#161b22" stroke-width="20" stroke-linecap="round"/>
+      <line x1="40" y1="170" x2="660" y2="170" stroke="#161b22" stroke-width="20" stroke-linecap="round"/>
+      <line x1="40" y1="260" x2="660" y2="260" stroke="#161b22" stroke-width="20" stroke-linecap="round"/>
+      <text x="28" y="85"  text-anchor="middle" fill="rgba(57,208,216,0.3)" font-family="JetBrains Mono" font-size="10">d=0</text>
+      <text x="28" y="175" text-anchor="middle" fill="rgba(240,168,48,0.3)"  font-family="JetBrains Mono" font-size="10">d=1</text>
+      <text x="28" y="265" text-anchor="middle" fill="rgba(255,107,107,0.3)" font-family="JetBrains Mono" font-size="10">d=2</text>
+
+      <!-- TREE EDGES (amber) -->
+      <line x1="350" y1="80" x2="180" y2="170" stroke="#f0a830" stroke-width="3"/>
+      <line x1="350" y1="80" x2="350" y2="170" stroke="#f0a830" stroke-width="3"/>
+      <line x1="350" y1="80" x2="520" y2="170" stroke="#f0a830" stroke-width="3"/>
+      <line x1="350" y1="170" x2="250" y2="260" stroke="#f0a830" stroke-width="3"/>
+      <line x1="350" y1="170" x2="450" y2="260" stroke="#f0a830" stroke-width="3"/>
+
+      <!-- CROSS EDGES (violet dashed) — same or adjacent level only -->
+      <line x1="180" y1="170" x2="350" y2="170" stroke="#a78bfa" stroke-width="2" stroke-dasharray="7,4"/>
+      <line x1="250" y1="260" x2="450" y2="260" stroke="#a78bfa" stroke-width="2" stroke-dasharray="7,4"/>
+      <line x1="520" y1="170" x2="450" y2="260" stroke="#a78bfa" stroke-width="2" stroke-dasharray="7,4"/>
+
+      <!-- nodes -->
+      <circle cx="350" cy="80"  r="28" fill="rgba(57,208,216,0.2)" stroke="#39d0d8" stroke-width="2.5"/>
+      <text x="350" y="75" text-anchor="middle" fill="#39d0d8" font-family="JetBrains Mono" font-size="14">0</text>
+      <text x="350" y="91" text-anchor="middle" fill="#39d0d8" font-family="Nunito" font-size="8">dist=0</text>
+
+      <circle cx="180" cy="170" r="26" fill="rgba(240,168,48,0.15)" stroke="#f0a830" stroke-width="2"/>
+      <text x="180" y="175" text-anchor="middle" fill="#f0a830" font-family="JetBrains Mono" font-size="14">1</text>
+
+      <circle cx="350" cy="170" r="26" fill="rgba(240,168,48,0.15)" stroke="#f0a830" stroke-width="2"/>
+      <text x="350" y="175" text-anchor="middle" fill="#f0a830" font-family="JetBrains Mono" font-size="14">2</text>
+
+      <circle cx="520" cy="170" r="26" fill="rgba(240,168,48,0.15)" stroke="#f0a830" stroke-width="2"/>
+      <text x="520" y="175" text-anchor="middle" fill="#f0a830" font-family="JetBrains Mono" font-size="14">5</text>
+
+      <circle cx="250" cy="260" r="26" fill="rgba(255,107,107,0.12)" stroke="#ff6b6b" stroke-width="1.5"/>
+      <text x="250" y="265" text-anchor="middle" fill="#ff6b6b" font-family="JetBrains Mono" font-size="14">3</text>
+
+      <circle cx="450" cy="260" r="26" fill="rgba(255,107,107,0.12)" stroke="#ff6b6b" stroke-width="1.5"/>
+      <text x="450" y="265" text-anchor="middle" fill="#ff6b6b" font-family="JetBrains Mono" font-size="14">4</text>
+
+      <!-- Legend -->
+      <line x1="80"  y1="307" x2="115" y2="307" stroke="#f0a830" stroke-width="3"/>
+      <text x="120" y="311" fill="#f0a830" font-family="Nunito" font-size="12">Tree edge (goes to next level)</text>
+      <line x1="320" y1="307" x2="355" y2="307" stroke="#a78bfa" stroke-width="2" stroke-dasharray="7,4"/>
+      <text x="360" y="311" fill="#a78bfa" font-family="Nunito" font-size="12">Cross edge (same or adjacent level, max 1 apart)</text>
+    </svg>
+  </div>
+</div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     §8 BFS vs DFS
+══════════════════════════════════════════════════════════ -->
+<section id="sec-compare">
+<div class="container">
+  <span class="section-num">SECTION 08</span>
+  <h2 class="section-title">BFS vs DFS — When to Use Which</h2>
+
+  <p>Both algorithms visit every reachable vertex exactly once in O(V+E) time. The difference is entirely about <em>what you need</em> from the traversal.</p>
+
+  <table class="fancy-table scroll-reveal">
+    <thead>
+      <tr>
+        <th>Property</th>
+        <th>BFS</th>
+        <th>DFS</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Data structure</td>
+        <td class="good">Queue (FIFO)</td>
+        <td>Stack / Recursion (LIFO)</td>
+      </tr>
+      <tr>
+        <td>Traversal order</td>
+        <td class="good">Level by level (wide)</td>
+        <td>Deep first (narrow)</td>
+      </tr>
+      <tr>
+        <td>Shortest path (unweighted)?</td>
+        <td class="good">✓ Guaranteed</td>
+        <td class="bad">✗ Not guaranteed</td>
+      </tr>
+      <tr>
+        <td>Memory use</td>
+        <td class="warn">O(width of graph) — can be large for wide graphs</td>
+        <td class="good">O(depth of graph) — better for deep, narrow graphs</td>
+      </tr>
+      <tr>
+        <td>Cycle detection</td>
+        <td>Possible (cross edges)</td>
+        <td class="good">Natural (back edges)</td>
+      </tr>
+      <tr>
+        <td>Topological sort</td>
+        <td class="warn">Kahn's algorithm (BFS-based, but different)</td>
+        <td class="good">Classic DFS post-order</td>
+      </tr>
+      <tr>
+        <td>Connected components</td>
+        <td class="good">O(V+E) — same as DFS</td>
+        <td class="good">O(V+E) — same as BFS</td>
+      </tr>
+      <tr>
+        <td>Bipartite testing</td>
+        <td class="good">Natural fit (level = color)</td>
+        <td>Also works (2-coloring via DFS)</td>
+      </tr>
+      <tr>
+        <td>Stack overflow risk</td>
+        <td class="good">None (iterative queue)</td>
+        <td class="warn">Recursive version can overflow on deep graphs</td>
+      </tr>
+      <tr>
+        <td>When to use</td>
+        <td class="good">Need shortest paths; level structure matters</td>
+        <td class="good">Need a path (any path); cycle/topo/SCC detection</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="compare-strip scroll-reveal">
+    <div class="compare-side">
+      <h4>📡 Use BFS when…</h4>
+      <ul>
+        <li>You need the <strong>shortest path</strong> (in edge count) between two vertices</li>
+        <li>You want to find all vertices within distance <em>k</em> of a source</li>
+        <li>The graph is wide but not deep (social networks, web graphs)</li>
+        <li>You're solving a puzzle and need the <strong>minimum number of moves</strong></li>
+        <li>You're testing bipartiteness using level-coloring</li>
+        <li>Broadcasting: reach nearest nodes first</li>
+      </ul>
+    </div>
+    <div class="compare-side">
+      <h4>🌀 Use DFS when…</h4>
+      <ul>
+        <li>You just need <strong>a path</strong> (shortest path doesn't matter)</li>
+        <li>Detecting cycles, strongly connected components (Tarjan's/Kosaraju's)</li>
+        <li>Topological sort on a DAG</li>
+        <li>The graph is deep but not wide (trees, hierarchical data)</li>
+        <li>Maze exploration (follow one path to the end, then backtrack)</li>
+        <li>Memory is tight — deep/narrow graphs make DFS more space-efficient</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout scroll-reveal">
+    <span class="callout-label">The Golden Rule</span>
+    <p>If someone asks "find the shortest path," your answer is BFS. If someone asks "is there a path?" or "find any path," DFS is simpler and equally correct. When edge weights vary, neither is right — use Dijkstra's (Lecture 11) or Bellman-Ford (Lecture 12).</p>
+  </div>
+</div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     §9 SUMMARY
+══════════════════════════════════════════════════════════ -->
+<section id="sec-summary">
+<div class="container">
+  <span class="section-num">SECTION 09</span>
+  <h2 class="section-title">Everything You Need to Know</h2>
+
+  <div class="card-grid scroll-reveal">
+    <div class="card">
+      <span class="card-icon">🏗️</span>
+      <h4>The Algorithm</h4>
+      <p>Enqueue source, mark it. While queue non-empty: dequeue v, for each unvisited neighbor w: mark w, set edgeTo/distTo, enqueue w.</p>
+    </div>
+    <div class="card">
+      <span class="card-icon">⏱️</span>
+      <h4>Complexity</h4>
+      <p>Time: <strong>O(V + E)</strong>. Every vertex is enqueued/dequeued at most once. Every edge is examined at most twice. Space: O(V).</p>
+    </div>
+    <div class="card">
+      <span class="card-icon">📏</span>
+      <h4>Shortest Paths</h4>
+      <p>BFS visits vertices in non-decreasing distance order. First visit = shortest path. Only valid for unit-weight (unweighted) graphs.</p>
+    </div>
+    <div class="card">
+      <span class="card-icon">🔍</span>
+      <h4>Edge Types</h4>
+      <p>Tree edges connect adjacent levels. Cross edges connect vertices at the same or adjacent levels. No edge spans more than 1 level difference.</p>
+    </div>
+    <div class="card">
+      <span class="card-icon">🎨</span>
+      <h4>Bipartite Testing</h4>
+      <p>2-color the graph during BFS (level ↔ color). If a same-color neighbor is found, the graph is not bipartite (odd cycle exists).</p>
+    </div>
+    <div class="card">
+      <span class="card-icon">📦</span>
+      <h4>Key Data Structures</h4>
+      <p><span class="inline-mono">marked[]</span> — visited set. <span class="inline-mono">edgeTo[]</span> — parent-link tree. <span class="inline-mono">distTo[]</span> — exact shortest distances. All filled in one pass.</p>
+    </div>
+  </div>
+
+  <h3>The Three Problems BFS Solves</h3>
+  <table class="fancy-table scroll-reveal">
+    <thead>
+      <tr><th>Problem</th><th>Query</th><th>Cost</th><th>Method</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Reachability</td>
+        <td>Is v reachable from s?</td>
+        <td class="good">O(1)</td>
+        <td><span class="inline-mono">marked[v]</span></td>
+      </tr>
+      <tr>
+        <td>Shortest distance</td>
+        <td>How many edges from s to v?</td>
+        <td class="good">O(1)</td>
+        <td><span class="inline-mono">distTo[v]</span></td>
+      </tr>
+      <tr>
+        <td>Shortest path</td>
+        <td>What is the actual shortest path?</td>
+        <td class="warn">O(path length)</td>
+        <td>Trace <span class="inline-mono">edgeTo[]</span> backwards</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout violet scroll-reveal">
+    <span class="callout-label">The One Sentence Summary</span>
+    <p>BFS is DFS with a queue instead of a stack — and that single change transforms an algorithm that finds <em>a</em> path into one that finds the <em>shortest</em> path, in the same O(V+E) time.</p>
+  </div>
+
+  <div style="text-align:center;margin-top:3rem" class="scroll-reveal">
+    <p style="color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:0.85rem">Coming up in Lecture 11:</p>
+    <p style="font-family:'DM Serif Display',serif;font-size:1.5rem;color:var(--teal)">Weighted Graphs · Dijkstra's Algorithm · Priority Queues · Shortest Paths with Costs</p>
+  </div>
+</div>
+</section>
+
+<footer>
+  <p>Based on <em>Algorithms, 4th Edition</em> by Sedgewick &amp; Wayne — Chapter 4.1 — Lecture 10 of 12</p>
+</footer>
+
+<!-- ══════════════════════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════════════════════ -->
+<script>
+// ── Scroll reveal ──
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+document.querySelectorAll('.scroll-reveal').forEach(el => observer.observe(el));
+
+// ══════════════════════════════════════════════════════════
+// BFS TRACE ANIMATOR
+// Graph adjacency: 0:[1,2,5], 1:[0,2], 2:[0,1,3,4], 3:[2,4,5], 4:[2,3], 5:[0,3]
+// New node positions in 380×310 viewBox:
+//   0:(70,155)  1:(165,55)  2:(265,155)  3:(345,55)  4:(345,255)  5:(70,255)
+// ══════════════════════════════════════════════════════════
+
+// Node screen positions for tooltip placement
+const bfsNodePos = {
+  0: {x:70,  y:155},
+  1: {x:165, y:55},
+  2: {x:265, y:155},
+  3: {x:345, y:55},
+  4: {x:345, y:255},
+  5: {x:70,  y:255}
+};
+
+const bfsEdgeMap = {
+  '0-1':'be01','1-0':'be01',
+  '0-2':'be02','2-0':'be02',
+  '0-5':'be05','5-0':'be05',
+  '1-2':'be12','2-1':'be12',
+  '2-3':'be23','3-2':'be23',
+  '2-4':'be24','4-2':'be24',
+  '3-4':'be34','4-3':'be34',
+  '3-5':'be35','5-3':'be35',
+};
+
+// BFS steps — each carries full queue/order state so reset is clean
+const bfsSteps = [
+  // ── INIT
+  { type:'init',
+    active: 0,
+    tooltip: {v:0, text:'enqueue( 0 )'},
+    op: '⬇ enqueue(0) — mark source, dist[0]=0',
+    msg:'🚀 Initialize: mark vertex 0, set dist[0]=0, enqueue 0 into the queue.',
+    mark:[0], dist:{0:0}, queue:[0], order:[] },
+
+  // ── Process 0
+  { type:'dequeue', active:0,
+    tooltip: {v:0, text:'dequeue → process'},
+    op: '⬆ dequeue(0) — now processing neighbors: 1, 2, 5',
+    msg:'📤 Dequeue 0 (front of queue). Will check neighbors 1, 2, 5.',
+    queue:[], order:[0] },
+
+  { type:'tree', v:0, w:1,
+    tooltip: {v:1, text:'enqueue( 1 )  d=1'},
+    op: '⬇ enqueue(1) — tree edge 0→1, dist[1]=1',
+    msg:'✓ Neighbor 1 is unvisited → mark it, set dist[1]=1, enqueue 1. Tree edge 0→1.',
+    mark:[0,1], dist:{0:0,1:1}, queue:[1], order:[0] },
+
+  { type:'tree', v:0, w:2,
+    tooltip: {v:2, text:'enqueue( 2 )  d=1'},
+    op: '⬇ enqueue(2) — tree edge 0→2, dist[2]=1',
+    msg:'✓ Neighbor 2 is unvisited → mark it, set dist[2]=1, enqueue 2. Tree edge 0→2.',
+    mark:[0,1,2], dist:{0:0,1:1,2:1}, queue:[1,2], order:[0] },
+
+  { type:'tree', v:0, w:5,
+    tooltip: {v:5, text:'enqueue( 5 )  d=1'},
+    op: '⬇ enqueue(5) — tree edge 0→5, dist[5]=1',
+    msg:'✓ Neighbor 5 is unvisited → mark it, set dist[5]=1, enqueue 5. Tree edge 0→5.',
+    mark:[0,1,2,5], dist:{0:0,1:1,2:1,5:1}, queue:[1,2,5], order:[0] },
+
+  // ── Process 1
+  { type:'dequeue', active:1,
+    tooltip: {v:1, text:'dequeue → process'},
+    op: '⬆ dequeue(1) — processing neighbors: 0, 2',
+    msg:'📤 Dequeue 1 (front of queue). Checking neighbors 0, 2.',
+    queue:[2,5], order:[0,1] },
+
+  { type:'skip', v:1, w:0,
+    tooltip: {v:0, text:'already marked ✓'},
+    op: '⟳ skip(0) — already visited  [cross edge]',
+    msg:'⟳ Neighbor 0: already marked (dist=0). Skip. This is a cross edge back to source.',
+    queue:[2,5] },
+
+  { type:'skip', v:1, w:2,
+    tooltip: {v:2, text:'already marked ✓'},
+    op: '⟳ skip(2) — already in queue  [cross edge, same level]',
+    msg:'⟳ Neighbor 2: already marked (dist=1). Skip. Cross edge — both 1 and 2 are at distance 1 (same level).',
+    queue:[2,5] },
+
+  // ── Process 2
+  { type:'dequeue', active:2,
+    tooltip: {v:2, text:'dequeue → process'},
+    op: '⬆ dequeue(2) — processing neighbors: 0, 1, 3, 4',
+    msg:'📤 Dequeue 2 (front of queue). Checking neighbors 0, 1, 3, 4.',
+    queue:[5], order:[0,1,2] },
+
+  { type:'skip', v:2, w:0,
+    tooltip: {v:0, text:'already marked ✓'},
+    op: '⟳ skip(0) — already visited',
+    msg:'⟳ Neighbor 0: already marked. Skip.',
+    queue:[5] },
+
+  { type:'skip', v:2, w:1,
+    tooltip: {v:1, text:'already marked ✓'},
+    op: '⟳ skip(1) — already visited  [same level]',
+    msg:'⟳ Neighbor 1: already marked (dist=1). Skip. Cross edge — same level as 2.',
+    queue:[5] },
+
+  { type:'tree', v:2, w:3,
+    tooltip: {v:3, text:'enqueue( 3 )  d=2'},
+    op: '⬇ enqueue(3) — tree edge 2→3, dist[3]=2',
+    msg:'✓ Neighbor 3 is unvisited → mark it, set dist[3]=2, enqueue 3. Tree edge 2→3.',
+    mark:[0,1,2,3,5], dist:{0:0,1:1,2:1,3:2,5:1}, queue:[5,3], order:[0,1,2] },
+
+  { type:'tree', v:2, w:4,
+    tooltip: {v:4, text:'enqueue( 4 )  d=2'},
+    op: '⬇ enqueue(4) — tree edge 2→4, dist[4]=2',
+    msg:'✓ Neighbor 4 is unvisited → mark it, set dist[4]=2, enqueue 4. Tree edge 2→4.',
+    mark:[0,1,2,3,4,5], dist:{0:0,1:1,2:1,3:2,4:2,5:1}, queue:[5,3,4], order:[0,1,2] },
+
+  // ── Process 5
+  { type:'dequeue', active:5,
+    tooltip: {v:5, text:'dequeue → process'},
+    op: '⬆ dequeue(5) — processing neighbors: 0, 3',
+    msg:'📤 Dequeue 5 (front of queue). Checking neighbors 0, 3.',
+    queue:[3,4], order:[0,1,2,5] },
+
+  { type:'skip', v:5, w:0,
+    tooltip: {v:0, text:'already marked ✓'},
+    op: '⟳ skip(0) — already visited',
+    msg:'⟳ Neighbor 0: already marked. Skip.',
+    queue:[3,4] },
+
+  { type:'skip', v:5, w:3,
+    tooltip: {v:3, text:'already marked ✓'},
+    op: '⟳ skip(3) — already in queue  [adjacent level]',
+    msg:'⟳ Neighbor 3: already marked (dist=2). Skip. Cross edge — 5 is at dist=1, 3 is at dist=2 (adjacent level).',
+    queue:[3,4] },
+
+  // ── Process 3
+  { type:'dequeue', active:3,
+    tooltip: {v:3, text:'dequeue → process'},
+    op: '⬆ dequeue(3) — processing neighbors: 2, 4, 5',
+    msg:'📤 Dequeue 3 (front of queue). Checking neighbors 2, 4, 5.',
+    queue:[4], order:[0,1,2,5,3] },
+
+  { type:'skip', v:3, w:2,
+    tooltip: {v:2, text:'already marked ✓'},
+    op: '⟳ skip(2) — already visited',
+    msg:'⟳ Neighbor 2: already marked. Skip.',
+    queue:[4] },
+
+  { type:'skip', v:3, w:4,
+    tooltip: {v:4, text:'already marked ✓'},
+    op: '⟳ skip(4) — already in queue  [same level]',
+    msg:'⟳ Neighbor 4: already marked (dist=2). Skip. Cross edge — both 3 and 4 are at distance 2 (same level).',
+    queue:[4] },
+
+  { type:'skip', v:3, w:5,
+    tooltip: {v:5, text:'already marked ✓'},
+    op: '⟳ skip(5) — already visited  [adjacent level]',
+    msg:'⟳ Neighbor 5: already marked (dist=1). Skip. Cross edge — adjacent level.',
+    queue:[4] },
+
+  // ── Process 4
+  { type:'dequeue', active:4,
+    tooltip: {v:4, text:'dequeue → process'},
+    op: '⬆ dequeue(4) — processing neighbors: 2, 3',
+    msg:'📤 Dequeue 4 (front of queue). Checking neighbors 2, 3.',
+    queue:[], order:[0,1,2,5,3,4] },
+
+  { type:'skip', v:4, w:2,
+    tooltip: {v:2, text:'already marked ✓'},
+    op: '⟳ skip(2) — already visited',
+    msg:'⟳ Neighbor 2: already marked. Skip.',
+    queue:[] },
+
+  { type:'skip', v:4, w:3,
+    tooltip: {v:3, text:'already marked ✓'},
+    op: '⟳ skip(3) — already visited  [same level]',
+    msg:'⟳ Neighbor 3: already marked. Skip.',
+    queue:[] },
+
+  // ── Done
+  { type:'done',
+    op: '🎉 BFS complete! Queue empty. All vertices visited.',
+    msg:'🎉 BFS complete! Queue is empty — all reachable vertices visited. Final distances: d[0]=0, d[1]=1, d[2]=1, d[5]=1, d[3]=2, d[4]=2. Visit order: 0 → 1 → 2 → 5 → 3 → 4. Every distTo[] value is the true shortest-path distance!',
+    queue:[], order:[0,1,2,5,3,4] }
+];
+
+let bSI = -1;
+let bMarked = new Set();
+let bDist   = {};
+let bQueue  = [];
+let bOrder  = [];
+
+// ── Node color helper
+function bfsColorNode(v, state) {
+  const c  = document.getElementById('bc'+v);
+  const t  = document.getElementById('bt'+v);
+  const dl = document.getElementById('bd'+v);   // dist label INSIDE svg node
+  if (!c) return;
+
+  const states = {
+    current:  { fill:'rgba(57,208,216,0.28)',  stroke:'#39d0d8', sw:'3', tc:'#39d0d8' },
+    visited:  { fill:'rgba(63,185,80,0.14)',   stroke:'#3fb950', sw:'2', tc:'#3fb950' },
+    enqueued: { fill:'rgba(240,168,48,0.14)',  stroke:'#f0a830', sw:'2', tc:'#f0a830' },
+    none:     { fill:'#161b22',               stroke:'#30363d', sw:'2', tc:'#8b949e' }
+  };
+  const s = states[state] || states.none;
+  c.style.fill        = s.fill;
+  c.style.stroke      = s.stroke;
+  c.style.strokeWidth = s.sw;
+  t.style.fill        = s.tc;
+
+  // Update dist label inside node
+  if (dl) {
+    const d = bDist[v];
+    if (d !== undefined) {
+      dl.textContent = 'd=' + d;
+      dl.style.fill  = s.tc;
+      dl.style.fontWeight = '700';
+    } else {
+      dl.textContent = 'd=?';
+      dl.style.fill  = '#444c56';
+      dl.style.fontWeight = '400';
+    }
+  }
+}
+
+// ── Edge color helper
+function bfsColorEdge(u, w, state) {
+  const eId = bfsEdgeMap[u+'-'+w];
+  if (!eId) return;
+  const el = document.getElementById(eId);
+  if (!el) return;
+  const styles = {
+    tree:  { stroke:'#f0a830', sw:'3',   dash:'none' },
+    cross: { stroke:'#a78bfa', sw:'2',   dash:'7,4'  },
+    none:  { stroke:'#30363d', sw:'2',   dash:'none' }
+  };
+  const s = styles[state] || styles.none;
+  el.style.stroke          = s.stroke;
+  el.style.strokeWidth     = s.sw;
+  el.style.strokeDasharray = s.dash;
+}
+
+// ── Tooltip inside SVG
+function bfsShowTooltip(tip) {
+  const grp  = document.getElementById('bfsTooltipGroup');
+  const bg   = document.getElementById('bfsTooltipBg');
+  const txt  = document.getElementById('bfsTooltipText');
+  if (!tip || !grp) return;
+  const pos  = bfsNodePos[tip.v];
+  if (!pos) return;
+
+  txt.textContent = tip.text;
+
+  // Position: try above node first, fall back below if near top
+  const tx = pos.x;
+  const ty = pos.y < 80 ? pos.y + 46 : pos.y - 46;
+
+  txt.setAttribute('x', tx);
+  txt.setAttribute('y', ty + 4);
+
+  const approxW = tip.text.length * 5.8 + 16;
+  bg.setAttribute('x', tx - approxW/2);
+  bg.setAttribute('y', ty - 12);
+  bg.setAttribute('width', approxW);
+  bg.setAttribute('height', 18);
+
+  grp.setAttribute('visibility', 'visible');
+}
+
+function bfsHideTooltip() {
+  const grp = document.getElementById('bfsTooltipGroup');
+  if (grp) grp.setAttribute('visibility', 'hidden');
+}
+
+// ── Queue bar render
+function bfsRenderQueue() {
+  const el = document.getElementById('bfsQueue');
+  if (!el) return;
+  if (bQueue.length === 0) {
+    el.innerHTML = '<span style="font-family:\'JetBrains Mono\',monospace;font-size:0.75rem;color:#444c56;padding:0 0.5rem">[ empty ]</span>';
+    return;
+  }
+  el.innerHTML = bQueue.map((v, i) => {
+    const isHead = i === 0;
+    const borderR = i === 0              ? '6px 0 0 6px'
+                  : i === bQueue.length-1 ? '0 6px 6px 0'
+                  : '0';
+    const bg  = isHead ? 'rgba(57,208,216,0.18)' : 'rgba(240,168,48,0.12)';
+    const brd = isHead ? '#39d0d8' : '#f0a830';
+    const clr = isHead ? '#39d0d8' : '#f0a830';
+    return `<div style="min-width:44px;height:44px;border:1px solid ${brd};border-right:${i===bQueue.length-1?'1px solid '+brd:'none'};background:${bg};display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:${borderR};font-family:'JetBrains Mono',monospace;color:${clr};font-size:0.9rem;font-weight:700;gap:1px">
+      ${v}
+      <span style="font-size:0.52rem;opacity:0.7">${isHead ? 'FRONT' : ''}</span>
+    </div>`;
+  }).join('');
+}
+
+// ── State arrays render
+function bfsUpdateStateArrays() {
+  for (let i = 0; i < 6; i++) {
+    // marked[]
+    const mc = document.getElementById('bm' + i);
+    if (mc) {
+      if (bMarked.has(i)) {
+        mc.textContent = 'T';
+        mc.className = 'state-cell visited';
+      } else {
+        mc.textContent = String(i);
+        mc.className = 'state-cell';
+      }
+    }
+    // distTo[]
+    const dc = document.getElementById('bd_c' + i);
+    if (dc) {
+      const d = bDist[i];
+      dc.textContent = (d !== undefined) ? String(d) : '∞';
+      dc.className = 'state-cell' + (d !== undefined ? ' visited' : '');
+    }
+  }
+
+  // Visit order
+  const ord = document.getElementById('bfsOrder');
+  if (ord) ord.textContent = bOrder.length ? bOrder.join(' → ') : '—';
+}
+
+// ── Op badge
+function bfsSetOp(text, type) {
+  const badge = document.getElementById('bfsOpBadge');
+  if (!badge) return;
+  const colors = {
+    enqueue: '#f0a830',
+    dequeue: '#39d0d8',
+    skip:    '#6a737d',
+    done:    '#a78bfa',
+    init:    '#39d0d8'
+  };
+  badge.style.color = colors[type] || '#8b949e';
+  badge.textContent = text;
+}
+
+// ── Log
+function bfsAddLog(step) {
+  const log = document.getElementById('bfsLog');
+  const div = document.createElement('div');
+  const typeClass = {
+    tree:    'enqueue',
+    dequeue: 'dequeue',
+    skip:    'skip',
+    done:    'done',
+    init:    'enqueue'
+  }[step.type] || '';
+  div.className = 'trace-step active ' + typeClass;
+  div.textContent = step.msg;
+  log.appendChild(div);
+  div.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// ── Full re-render of graph from accumulated state
+function bfsRedrawGraph(currentStep) {
+  // Reset all nodes and edges first
+  for (let i = 0; i < 6; i++) {
+    if (bMarked.has(i)) bfsColorNode(i, 'visited');
+    else                bfsColorNode(i, 'none');
+  }
+
+  // Re-apply all edge colors (walk through history)
+  // We track edges via scanning the current step data:
+  // (edges are persistent — once colored they stay)
+}
+
+// ── Main step function
+function bfsNext() {
+  if (bSI >= bfsSteps.length - 1) return;
+  bSI++;
+  const step = bfsSteps[bSI];
+
+  // Apply state changes from step
+  if (step.mark)  step.mark.forEach(v => bMarked.add(v));
+  if (step.dist)  Object.entries(step.dist).forEach(([v,d]) => { bDist[parseInt(v)] = d; });
+  if (step.queue !== undefined) bQueue = [...step.queue];
+  if (step.order !== undefined) bOrder = [...step.order];
+
+  // Redraw all nodes
+  for (let i = 0; i < 6; i++) {
+    if (bMarked.has(i)) bfsColorNode(i, 'visited');
+    else                bfsColorNode(i, 'none');
+  }
+
+  // Apply per-step visual
+  if (step.type === 'init') {
+    bfsColorNode(0, 'enqueued');
+    bfsSetOp(step.op, 'enqueue');
+  }
+  if (step.type === 'tree') {
+    bfsColorEdge(step.v, step.w, 'tree');
+    bfsColorNode(step.w, 'enqueued');
+    bfsSetOp(step.op, 'enqueue');
+  }
+  if (step.type === 'skip') {
+    bfsColorEdge(step.v, step.w, 'cross');
+    bfsSetOp(step.op, 'skip');
+  }
+  if (step.type === 'dequeue') {
+    bfsColorNode(step.active, 'current');
+    bfsSetOp(step.op, 'dequeue');
+  }
+  if (step.type === 'done') {
+    for (let i = 0; i < 6; i++) bfsColorNode(i, 'visited');
+    bfsSetOp(step.op, 'done');
+  }
+
+  // Tooltip
+  if (step.tooltip) bfsShowTooltip(step.tooltip);
+  else              bfsHideTooltip();
+
+  bfsRenderQueue();
+  bfsUpdateStateArrays();
+  bfsAddLog(step);
+
+  // Disable button when done
+  const btn = document.getElementById('bfsNextBtn');
+  if (bSI >= bfsSteps.length - 1) {
+    btn.textContent = 'Done ✓';
+    btn.disabled = true;
+    btn.style.opacity = '0.5';
+  }
+}
+
+// ── Reset
+function bfsReset() {
+  bSI = -1;
+  bMarked.clear();
+  bDist  = {};
+  bQueue = [];
+  bOrder = [];
+
+  // Reset all nodes
+  for (let i = 0; i < 6; i++) bfsColorNode(i, 'none');
+
+  // Reset all edges
+  Object.values(bfsEdgeMap).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.style.stroke          = '#30363d';
+      el.style.strokeWidth     = '2';
+      el.style.strokeDasharray = 'none';
+    }
+  });
+
+  // Reset dist labels inside nodes
+  for (let i = 0; i < 6; i++) {
+    const dl = document.getElementById('bd'+i);
+    if (dl) { dl.textContent = 'd=?'; dl.style.fill = '#444c56'; dl.style.fontWeight = '400'; }
+  }
+
+  bfsHideTooltip();
+
+  document.getElementById('bfsLog').innerHTML =
+    '<div class="trace-step active">🚀 Press "Next Step" to begin BFS from vertex 0.</div>';
+
+  const btn = document.getElementById('bfsNextBtn');
+  btn.textContent = 'Next Step →';
+  btn.disabled = false;
+  btn.style.opacity = '1';
+
+  bfsSetOp('Press Next Step to begin', 'none');
+  bfsRenderQueue();
+  bfsUpdateStateArrays();
+}
+</script>
+
+</body>
+</html>

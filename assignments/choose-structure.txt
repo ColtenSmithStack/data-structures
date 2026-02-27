@@ -1,0 +1,30 @@
+1A. I would use two queues, one for normal jobs and one for urgent jobs, as queues are best for situations where the older elements have priority over newer elements when processing the data, and having two seperate queues allows for both adding and removing urgent jobs to have a running time of O(1), as only having one queue would require either iterating through urgent jobs in the queue to add a new urgent job between the urgent and non-urgent job lists, increasing the running time to O(n).
+1B. Other structures would have different downsides depending on the structure chosen. Stacks, for example, would increase the running time for adding or removing jobs due to needing to iterate through the set to remove data from the opposite side, increasing from O(1) to O(n). Arrays could be made to have a running time of O(1) for both removal and addition, although their inability to dynamically resize would add both extra runtime while resizing and result in more space being taken up in RAM. 
+
+2A. This is a weird one, and it only makes sense under my assumption that replacing an array with an empty array is O(1), but I think I would use both a linked-list stack and an array stack, the linked-list stack being for the back history, since you add and remove pages from the same side, and the array stack being for the forward history, since with any other structure (stack, queue, deque) the only way to clear the history would be by iterating through the data structure, while with an array you can just set the array to be equal to an empty array, which has a runtime of O(1). In this model the current page would be whatever page is at the "top" of the stack. (I could be completely wrong about how long it takes to erase arrays, in which case I would just use a normal stack)
+2B. Yes, although doing so would result in the time taken to delete the forward history increasing from O(1) to O(n). With a deque, I would have a "buffer" element sit in the middle of the deque, with the back history being added to one side of the buffer and the forward history being added to the other.
+
+3A. Honestly, I would use the same structure I decided on in question 2, using a linked-list stack for the undo history and an array stack for the redo history. 
+3B. Both queues and arrays would require iterating through the elements when modifying the data, increasing runtime from O(1) to O(n).
+
+4A. This question substantially fried my brain from trying to come up with the best possible answer so I will want to go over it with you in class if possible. In the end I just decided on using a queue where whenever a new temperature is added it immediately removes the oldest one, and whenever the maximum temperature is requested it simply iterates through to find the largest one. While this does make it take O(n) to return the highest temp, I could not find a more efficient way, as storing the data in order requires iterating through the data with each entry, which seems far worse, in my opinion. 
+4B. A plain array would require iterating through the data to remove the oldest reading, while a stack would require iterating through the data to add a new reading in order to avoid removing the newest reading rather than the oldest.
+
+5A. A deque allows you to add and remove from both sides, meaning you can iterate on both sides at once to see if they match. A queue or stack both can only modify one side at once, meaning that in order to find a closing delimiter you would have to iterate through the entire dataset. 
+5B.
+
+6A. A Deque allows you to add new processes to the back of the list, removing from the front, while also allowing you to add waiting processes to the front to be picked first. 
+6B.
+
+7A. Merge sort is stable (retains order of duplicate entries) and has a speed of N log N. 
+7B. Quicksort is not stable, meaning that duplicate entries may not retain their original order.
+
+8A. Insertion sort works quickest with nearly sorted input and does not require much memory. 
+8B. The expected time complexity is O(n+d), with the d being number of inversions.
+
+9A. Selection sort minimizes the number of writes by at most writing each cell twice by performing the maximum number of swaps.
+9B.In the worst case scenario of a selection sort, each element except the last must be swapped at least once, meaning at most 998 writes for 500 elements.
+
+10A. Insertion sort divides the array into sorted and unsorted sections, meaning it will be able do determine which single element is out of place far quicker than any other algorithm.
+10B. O(n).
+

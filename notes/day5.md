@@ -1,0 +1,32 @@
+- Graphs 
+    - The most general data structure 
+    - Unspecific
+    - Graph G = (V, E) consists of set V (vertices) and E (edges)
+        - Vetices are data points, edges are connections 
+    - Graph Types 
+        - Undirected 
+            - Edges have no direction, meaning you can travel both ways along any edge 
+        - Directed 
+            - Each edge has a specified "direction", meaning you cannot travel both ways on an edge unless specified 
+        - Weighted 
+            - Each edge carries a relative "cost" to travel 
+        - Unweighted 
+            - Each edge has the same cost to use 
+        - Bipartite 
+            - Vertices split into two groups, and every edge connects one group to the other. 
+        - Tree 
+            - Connected graph with no cycles, has exactly V-1 Edges. 
+        - Forest 
+            - Multiple disconnected trees.
+        - Adjacency Matrix 
+            - Method of condensing graph information into a 2D matrix using arrays
+            - Each cell on the matrix represents an edge between two vertices 
+            - Vertices that have no edges between them are represented with an empty cell
+        - Adjacency List 
+            - Rather than a 2D array, Adjacency Lists use a series of linked lists in an array to represent the edges and vertices in a graph 
+            - Each vertice has a list of each edge of that vertice, using the index of that vertice in the array 
+            - For directed and weighted graphs, lists only contain edges that point away from the specified vertice, with the weight of the edge stored as a second value in the format ( i, w) 
+    - Degree 
+        -  The degree of a vertex is the number of edges connected to it
+     
+    

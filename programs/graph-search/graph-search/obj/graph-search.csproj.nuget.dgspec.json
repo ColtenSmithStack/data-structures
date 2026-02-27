@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/home/coltensmith/workspace/github/data-structures/programs/data-structures-practice/data-structures-practice/data-structures-practice.csproj": {}
+    "/home/coltensmith/workspace/github/data-structures/programs/graph-search/graph-search/graph-search.csproj": {}
   },
   "projects": {
-    "/home/coltensmith/workspace/github/data-structures/programs/data-structures-practice/data-structures-practice/data-structures-practice.csproj": {
+    "/home/coltensmith/workspace/github/data-structures/programs/graph-search/graph-search/graph-search.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/home/coltensmith/workspace/github/data-structures/programs/data-structures-practice/data-structures-practice/data-structures-practice.csproj",
-        "projectName": "data-structures-practice",
-        "projectPath": "/home/coltensmith/workspace/github/data-structures/programs/data-structures-practice/data-structures-practice/data-structures-practice.csproj",
+        "projectUniqueName": "/home/coltensmith/workspace/github/data-structures/programs/graph-search/graph-search/graph-search.csproj",
+        "projectName": "graph-search",
+        "projectPath": "/home/coltensmith/workspace/github/data-structures/programs/graph-search/graph-search/graph-search.csproj",
         "packagesPath": "/home/coltensmith/.nuget/packages/",
-        "outputPath": "/home/coltensmith/workspace/github/data-structures/programs/data-structures-practice/data-structures-practice/obj/",
+        "outputPath": "/home/coltensmith/workspace/github/data-structures/programs/graph-search/graph-search/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/home/coltensmith/.nuget/NuGet/NuGet.Config"
@@ -20,6 +20,7 @@
           "net10.0"
         ],
         "sources": {
+          "/usr/lib/dotnet/library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -59,7 +60,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/home/coltensmith/.dotnet/sdk/10.0.102/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "/usr/lib/dotnet/sdk/10.0.103/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.CSharp": "(,4.7.32767]",
             "Microsoft.VisualBasic": "(,10.4.32767]",

@@ -1,0 +1,31 @@
+# DAY 3 
+- Queues 
+    - FIFO 
+    - Oldest element in the set is removed first 
+    - Like a line at an amusement park, the person who has been in the line the longest is the first to get on the coaster
+- Heap and Stack Memory
+    - Heap memory is allocated and persistent. Must be manually cleared
+    - Stack memory is local and will be cleared automatically
+- Deques 
+    - Double sided queue 
+    - Can add or remove from both the front and the back 
+    - Best to be built with linked lists
+- Sorting Algorithms 
+    - Selection Sort 
+        - Repeatedly sort through the array and swap the smallest element to the beginning 
+        - O(n^2)
+    - Insertion Sort 
+        - Divide the array into a sorted and unsorted "sub-array" sections, starting with the first element
+        - Uses a "key" to divide the sub-arrays
+        - Iterate through each element of the unsorted sub-array and insert it into the sorted sub-array at it's proper position
+    - Shell Sort 
+        - Sorts elements at specific intervals, reducing the gap with each sort until it becomes 1, at which point it acts like an insertion sort
+    - Merge Sort 
+        - Recursively divides the array into two halves, sorts each half, and then merges the two sorted halves
+        - Stable
+        - O(n log n)
+    - Quicksort 
+        - O(n log n) 
+        - Choose a pivot element 
+        - Rearrange the array so all elements are on the correct side of the pivot 
+        - Recursively apply Quicksort to the pivoted halves

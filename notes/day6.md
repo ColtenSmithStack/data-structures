@@ -1,0 +1,27 @@
+- Depth First Search 
+    - Recursively check every unchecked vertice along the edges of the current vertice
+    - Goes as far as possible before backtracking
+    - Recursive 
+        - Elegant and Concise 
+        - Backtracking is automatic 
+        - Uses the system call stack implicitly 
+        - Stack Depth = Longest DFS path = up to O(V) frames 
+        - ! Can crash on very deep graphs (stack overflow with 10K - 100K depth)
+        - Best for teaching, small/medium graphs, competitive programming 
+    - Iterative 
+        - Uses an explicit stack data structure 
+        -
+    - Can solve many problems 
+        - Visits every reachavle vertex exactly once 
+        - Finds paths 
+- Breadth First Search 
+    - Check every adjacent node before progressing to child nodes 
+    - Always finds the shortest path 
+    - Examples 
+        - Web Crawlers 
+        - "Degrees of Separation" 
+        - GPS Routing 
+        - Puzzle Solving 
+        - Network Broadcasting 
+        - Bipartite Testing  
+    
